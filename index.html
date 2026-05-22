@@ -53,7 +53,7 @@
     </div>
 
     <div class="field">
-        <label>Cor da Sacola (Identificada ou Ajuste Manual) *</label>
+        <label>Cor da Sacola (Identificada Automaticamente) *</label>
         <div class="row-cor">
             <input type="color" id="corSacola" value="#00bcd4" style="width: 60px;">
             <span id="txtCorInfo" style="font-size: 12px; color: #64748b;">Aguardando logo...</span>
@@ -106,7 +106,7 @@ const bancoModelosSacola = {
     }
 };
 
-// Gerenciamento e captura do upload da logo
+// Gerenciamento e captura do upload da logo do cliente
 document.getElementById('logoCliente').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -126,6 +126,8 @@ document.getElementById('logoCliente').addEventListener('change', function(e) {
 function extrairCorPredominante() {
     const canvasTemp = document.createElement('canvas');
     const ctxTemp = canvasTemp.getContext('2d');
+    
+    // Reduz o tamanho para otimizar e focar no centro do logotipo
     canvasTemp.width = 150;
     canvasTemp.height = 150;
     
@@ -142,6 +144,7 @@ function extrairCorPredominante() {
         let b = imgData[i+2];
         let a = imgData[i+3];
 
+        // Ignora pixels muito transparentes, brancos ou muito pretos (bordas e sombras)
         if (a < 220) continue;
         if (r > 235 && g > 235 && b > 235) continue;
         if (r < 25 && g < 25 && b < 25) continue;
@@ -155,6 +158,7 @@ function extrairCorPredominante() {
         }
     }
 
+    // Alimenta o campo seletor de cor com o tom extraído da logo do cliente
     document.getElementById('corSacola').value = corMaisFrequente;
     document.getElementById('txtCorInfo').innerText = "Cor detectada!";
 }
@@ -170,7 +174,7 @@ function carregarImagemAsync(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Falha ao carregar: " + src));
+        img.onerror = () => reject(new Error("Falha ao carregar arquivo de fundo: " + src));
         img.src = src;
     });
 }
@@ -242,11 +246,11 @@ async function processarEMockup() {
             else if (r > 30 && g > 30 && b > 30 && !(r === g && g === b && r < 45)) {
                 let intensidadeSombraR = r / 255;
                 let intensidadeSombraG = g / 255;
-                let intensitySombraB = b / 255;
+                let intensidadeSombraB = b / 255;
 
                 pixels[i] = rAlvo * intensidadeSombraR;
                 pixels[i + 1] = gAlvo * intensidadeSombraG;
-                pixels[i + 2] = bAlvo * intensitySombraB;
+                pixels[i + 2] = bAlvo * intensidadeSombraB;
             }
         }
 
@@ -270,7 +274,7 @@ async function processarEMockup() {
 
             // Trava de segurança: Se a altura calculada estourar os limites verticais da sacola, calibra o tamanho pela altura
             if (alturaAlvo > areaUtil.altura * 0.65) {
-                alturaAlvo = areaUtil.areaUtil.altura * 0.65;
+                alturaAlvo = areaUtil.altura * 0.65;
                 larguraAlvo = alturaAlvo * proporcaoLogo;
             }
 
@@ -283,7 +287,6 @@ async function processarEMockup() {
             ctx.drawImage(imgLogo, posX, posY, larguraAlvo, alturaAlvo);
             ctx.restore();
         }
-
         // Adiciona as especificações de cores na imagem final gerada
         ctx.fillStyle = "#475569";
         ctx.font = "bold 11px Arial";
