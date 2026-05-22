@@ -181,34 +181,27 @@ async function processarEMockup() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     try {
-        // Carrega assincronamente as imagens em branco de máscara e sombras reais do seu banco
-        const imgMascara = await carregarImagemAsync(configModelo.mask);
-        const imgSombras = await carregarImagemAsync(configModelo.shadow);
+        // Carrega apenas a foto da sua sacola branca que já está no servidor
+        const imgSacolaBranca = await carregarImagemAsync(configModelo.shadow);
 
-        // 1. APLICAÇÃO DA MÁSCARA: Desenha e pinta apenas o corpo da sacola
+        // 1. CRIA A MÁSCARA AUTOMÁTICA: Pinta o formato exato da imagem com a cor da logo
         ctx.save();
-        ctx.drawImage(imgMascara, 0, 0, canvas.width, canvas.height);
-        ctx.globalCompositeOperation = "source-in"; // Restringe o desenho à silhueta da sacola
+        ctx.drawImage(imgSacolaBranca, 0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = "source-in"; // Diz pro Canvas pintar apenas por cima da sacola
         ctx.fillStyle = corIdentificadaAutomatica;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
 
-        // 2. FUSÃO TRIDIMENSIONAL: Aplica por cima os vincos, dobras e alças originais da foto
+        // 2. FUSÃO TRIDIMENSIONAL: Aplica as dobras e sombras reais da foto por cima da cor
         ctx.save();
-        ctx.globalCompositeOperation = "multiply"; // Mescla os tons escuros de sombra com a cor de fundo
-        ctx.drawImage(imgSombras, 0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = "multiply"; // Mistura os vincos e sombras da foto original
+        ctx.drawImage(imgSacolaBranca, 0, 0, canvas.width, canvas.height);
         ctx.restore();
 
-        // Adiciona as alças/partes claras que não devem sofrer o efeito multiply
-        ctx.save();
-        ctx.globalCompositeOperation = "source-over";
-        ctx.drawImage(imgSombras, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-
-        // 3. POSICIONAMENTO DA LOGOMARCA: Aplica a estampa centralizada na área livre
+        // 3. POSICIONAMENTO DA LOGOMARCA: Aplica a estampa centralizada
         if (imgLogo) {
             let areaUtil = configModelo.areaUtil;
-            let larguraAlvo = areaUtil.largura * 0.8; // Ocupa no máximo 80% da área útil
+            let larguraAlvo = areaUtil.largura * 0.8;
             let alturaAlvo = larguraAlvo * (imgLogo.height / imgLogo.width);
 
             if (alturaAlvo > areaUtil.altura * 0.7) {
@@ -220,7 +213,7 @@ async function processarEMockup() {
             let posY = areaUtil.y + (areaUtil.altura - alturaAlvo) / 2;
 
             ctx.save();
-            ctx.globalAlpha = 0.98; // Leve transparência para simular a tinta sobre o papel
+            ctx.globalAlpha = 0.98; // Tinta simulada levemente transparente
             ctx.drawImage(imgLogo, posX, posY, larguraAlvo, alturaAlvo);
             ctx.restore();
         }
@@ -232,16 +225,17 @@ async function processarEMockup() {
         let textoEspecificacao = numCores === 'cromia' ? "GRAVAÇÃO: CROMIA ( PAPEL )" : `GRAVAÇÃO: ${numCores} COR(ES) SEGUINDO O PADRÃO DA LOGO`;
         ctx.fillText(textoEspecificacao, 580, 580);
 
-        // Habilita e libera o botão de download em alta definição
+        // Habilita o botão de download
         const btnBaixar = document.getElementById('btnBaixarImage');
         btnBaixar.href = canvas.toDataURL("image/png");
         btnBaixar.style.display = 'inline-block';
 
     } catch (error) {
         console.error(error);
-        alert("Erro ao gerar o mockup. Certifique-se de que os caminhos das imagens de máscara e sombra em branco no 'bancoModelosSacola' estão corretos na sua pasta.");
+        alert("Erro ao gerar o mockup. Verifique se os nomes dos arquivos no código são exatamente iguais aos que você subiu.");
     }
 }
+
 </script>
 </body>
 </html>
