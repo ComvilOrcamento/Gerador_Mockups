@@ -75,20 +75,20 @@
 let imgLogo = null;
 let corIdentificadaAutomatica = "#00bcd4"; // Cor padrão inicial
 
-// Banco de dados integrado de imagens em branco (Máscaras e Sombras reais)
-// Você deve substituir as URLs em branco pelas fotos ou caminhos do seu servidor/pasta local
+// Banco de dados ajustado para ler as imagens soltas na mesma pasta que o index.html
 const bancoModelosSacola = {
     "de-pe": {
-        "mask": "img/sacola_pe_mascara.png",    // PNG silhueta preta/sólida da área pintável
-        "shadow": "img/sacola_pe_sombras.png",  // PNG com fundo transparente contendo vincos/dobras
+        "mask": "sacola_pe_mascara.png",      // Nome exato da silhueta preta que você vai subir
+        "shadow": "sacola_pe_sombras.png",    // Sua foto real da sacola branca vertical
         "areaUtil": { x: 140, y: 160, largura: 200, altura: 200 }
     },
     "deitada": {
-        "mask": "img/sacola_deitada_mascara.png",
-        "shadow": "img/sacola_deitada_sombras.png",
+        "mask": "sacola_deitada_mascara.png",  // Nome exato da silhueta preta que você vai subir
+        "shadow": "sacola_deitada_sombras.png",// Sua foto real da sacola branca horizontal
         "areaUtil": { x: 135, y: 195, largura: 235, altura: 185 }
     }
 };
+
 
 // Captura e gerencia o upload da logomarca do cliente
 document.getElementById('logoCliente').addEventListener('change', function(e) {
