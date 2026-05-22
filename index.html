@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comvil - Gerador de Mockups Fotorealistas 3D</title>
+    <title>Comvil - Gerador de Mockups Pro Inteligente 3D</title>
     <style>
         :root {
             --primary: #003366;
@@ -51,7 +51,7 @@
         <input type="file" id="logoCliente" accept="image/png" style="padding-top: 7px;">
     </div>
 
-    <div id="boxAvisoCor" class="aviso-cor">Cor da Sacola Definida pela Logo</div>
+    <div id="boxAvisoCor" class="aviso-cor">Cor Processada Automaticamente</div>
 
     <div class="field">
         <label>Quantidade de Cores Gravadas *</label>
@@ -64,7 +64,7 @@
         </select>
     </div>
 
-    <button class="btn-gerar" onclick="processarEMockup()">OK - Gerar Mockup Realista</button>
+    <button class="btn-gerar" onclick="processarEMockup()">Gerar Mockup 3D Realista</button>
 </div>
 
 <div class="painel-preview">
@@ -73,26 +73,23 @@
 </div>
 <script>
 let imgLogo = null;
-let corIdentificadaAutomatica = "#00bcd4"; // Cor padrão inicial
+let corIdentificadaAutomatica = "#00bcd4";
 
-// Banco de dados ajustado para ler as imagens soltas na mesma pasta que o index.html
+// Banco de dados com os arquivos que você já possui soltos na mesma pasta do servidor
 const bancoModelosSacola = {
     "de-pe": {
-        "mask": "sacola_pe_mascara.png",      // Nome exato da silhueta preta que você vai subir
-        "shadow": "sacola_pe_sombras.png",    // Sua foto real da sacola branca vertical
+        "shadow": "sacola_pe_sombras.png",
         "areaUtil": { x: 140, y: 160, largura: 200, altura: 200 }
     },
     "deitada": {
-        "mask": "sacola_deitada_mascara.png",  // Nome exato da silhueta preta que você vai subir
-        "shadow": "sacola_deitada_sombras.png",// Sua foto real da sacola branca horizontal
+        "shadow": "sacola_deitada_sombras.png",
         "areaUtil": { x: 135, y: 195, largura: 235, altura: 185 }
     }
 };
 
-
 // Captura e gerencia o upload da logomarca do cliente
 document.getElementById('logoCliente').addEventListener('change', function(e) {
-    const file = e.target.files[0];
+    const file = e.target.files;
     if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
@@ -157,15 +154,15 @@ function limparPreview() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     document.getElementById('btnBaixarImage').style.display = 'none';
 }
+
 function carregarImagemAsync(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Erro ao carregar imagem: " + src));
+        img.onerror = () => reject(new Error("Falha ao carregar: " + src));
         img.src = src;
     });
 }
-
 async function processarEMockup() {
     const canvas = document.getElementById('canvasMockup');
     const ctx = canvas.getContext('2d');
@@ -173,7 +170,7 @@ async function processarEMockup() {
     const numCores = document.getElementById('numCores').value;
     const configModelo = bancoModelosSacola[modeloSelecionado];
 
-    // Fundo limpo de estúdio fotográfico (Efeito infinito cinza claro)
+    // 1. Cria o fundo limpo de estúdio fotográfico com degradê infinito suave
     let gradEstudio = ctx.createRadialGradient(300, 300, 50, 300, 300, 400);
     gradEstudio.addColorStop(0, "#ffffff");
     gradEstudio.addColorStop(1, "#e2e8f0");
@@ -181,61 +178,96 @@ async function processarEMockup() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     try {
-        // Carrega apenas a foto da sua sacola branca que já está no servidor
-        const imgSacolaBranca = await carregarImagemAsync(configModelo.shadow);
+        // Carrega a imagem da sacola branca enviada
+        const imgOriginal = await carregarImagemAsync(configModelo.shadow);
 
-        // 1. CRIA A MÁSCARA AUTOMÁTICA: Pinta o formato exato da imagem com a cor da logo
-        ctx.save();
-        ctx.drawImage(imgSacolaBranca, 0, 0, canvas.width, canvas.height);
-        ctx.globalCompositeOperation = "source-in"; // Diz pro Canvas pintar apenas por cima da sacola
-        ctx.fillStyle = corIdentificadaAutomatica;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
+        // Cria uma tela de processamento oculta do mesmo tamanho da sacola
+        const canvasProc = document.createElement('canvas');
+        canvasProc.width = canvas.width;
+        canvasProc.height = canvas.height;
+        const ctxProc = canvasProc.getContext('2d');
 
-        // 2. FUSÃO TRIDIMENSIONAL: Aplica as dobras e sombras reais da foto por cima da cor
-        ctx.save();
-        ctx.globalCompositeOperation = "multiply"; // Mistura os vincos e sombras da foto original
-        ctx.drawImage(imgSacolaBranca, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
+        // Desenha a sacola branca original no canvas de processamento
+        ctxProc.drawImage(imgOriginal, 0, 0, canvas.width, canvas.height);
 
-        // 3. POSICIONAMENTO DA LOGOMARCA: Aplica a estampa centralizada
+        // Captura os dados brutos de pixels (RGBA) da sacola branca
+        const imgDataBuffer = ctxProc.getImageData(0, 0, canvasProc.width, canvasProc.height);
+        const pixels = imgDataBuffer.data;
+
+        // Converte a cor identificada de Hexadecimal para RGB numérico
+        const rAlvo = parseInt(corIdentificadaAutomatica.slice(1, 3), 16);
+        const gAlvo = parseInt(corIdentificadaAutomatica.slice(3, 5), 16);
+        const bAlvo = parseInt(corIdentificadaAutomatica.slice(5, 7), 16);
+
+        // Algoritmo de Varredura por Luminância Autônoma
+        for (let i = 0; i < pixels.length; i += 4) {
+            let r = pixels[i];
+            let g = pixels[i + 1];
+            let b = pixels[i + 2];
+            let a = pixels[i + 3];
+
+            // Ignora pixels transparentes da imagem
+            if (a < 10) continue;
+
+            // Identifica se o pixel faz parte da sacola branca analisando o brilho
+            // Tons claros de cinza/branco são mapeados como o corpo da sacola
+            if (r > 30 && g > 30 && b > 30 && !(r === g && g === b && r < 40)) {
+                // Calcula a intensidade das dobras e sombras originais (0 a 1)
+                let intensidadeSombraR = r / 255;
+                let intensidadeSombraG = g / 255;
+                let intensidadeSombraB = b / 255;
+
+                // Aplica a nova cor multiplicando pelos vincos reais da foto branca
+                pixels[i] = rAlvo * intensidadeSombraR;
+                pixels[i + 1] = gAlvo * intensidadeSombraG;
+                pixels[i + 2] = bAlvo * intensidadeSombraB;
+            }
+        }
+
+        // Devolve os pixels modificados e realistas para a tela oculta
+        ctxProc.putImageData(imgDataBuffer, 0, 0);
+
+        // Desenha a sacola colorida com sombras reais por cima do fundo de estúdio
+        ctx.drawImage(canvasProc, 0, 0);
+        // 3. POSICIONAMENTO E CENTRALIZAÇÃO MATEMÁTICA DA LOGOMARCA
         if (imgLogo) {
             let areaUtil = configModelo.areaUtil;
-            let larguraAlvo = areaUtil.largura * 0.8;
+            let larguraAlvo = areaUtil.largura * 0.75; // Ocupa no máximo 75% da área disponível
             let alturaAlvo = larguraAlvo * (imgLogo.height / imgLogo.width);
 
-            if (alturaAlvo > areaUtil.altura * 0.7) {
-                alturaAlvo = areaUtil.altura * 0.7;
+            // Ajusta o tamanho da estampa caso ela estoure os limites verticais da faca
+            if (alturaAlvo > areaUtil.altura * 0.65) {
+                alturaAlvo = areaUtil.altura * 0.65;
                 larguraAlvo = alturaAlvo * (imgLogo.width / imgLogo.height);
             }
 
+            // Calcula a posição XY exata para alinhar no centro do corpo da sacola
             let posX = areaUtil.x + (areaUtil.largura - larguraAlvo) / 2;
             let posY = areaUtil.y + (areaUtil.altura - alturaAlvo) / 2;
 
             ctx.save();
-            ctx.globalAlpha = 0.98; // Tinta simulada levemente transparente
+            ctx.globalAlpha = 0.98; // Simula a fixação física da tinta sobre o substrato
             ctx.drawImage(imgLogo, posX, posY, larguraAlvo, alturaAlvo);
             ctx.restore();
         }
 
-        // Rodapé técnico com a especificação das cores
+        // Adiciona as especificações de cores na imagem final gerada
         ctx.fillStyle = "#475569";
         ctx.font = "bold 11px Arial";
         ctx.textAlign = "right";
         let textoEspecificacao = numCores === 'cromia' ? "GRAVAÇÃO: CROMIA ( PAPEL )" : `GRAVAÇÃO: ${numCores} COR(ES) SEGUINDO O PADRÃO DA LOGO`;
         ctx.fillText(textoEspecificacao, 580, 580);
 
-        // Habilita o botão de download
+        // Habilita e configura o botão de download em PNG nativo de alta qualidade
         const btnBaixar = document.getElementById('btnBaixarImage');
         btnBaixar.href = canvas.toDataURL("image/png");
         btnBaixar.style.display = 'inline-block';
 
     } catch (error) {
         console.error(error);
-        alert("Erro ao gerar o mockup. Verifique se os nomes dos arquivos no código são exatamente iguais aos que você subiu.");
+        alert("Erro ao processar as texturas. Certifique-se de que os nomes dos arquivos no servidor correspondem exatamente a 'sacola_pe_sombras.png' e 'sacola_deitada_sombras.png'.");
     }
 }
-
 </script>
 </body>
 </html>
