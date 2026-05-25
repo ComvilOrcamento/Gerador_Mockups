@@ -129,12 +129,13 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
+        /* REQUISITO: Ajustado para 9 colunas (18 cores divididas perfeitamente em exatamente 2 linhas) */
         .cordao-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 6px;
             background-color: #f8fafc;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
         }
@@ -271,7 +272,8 @@
 
     <div class="container">
         <div class="form-container">
-            <h2>Variações de Sacola</h2>
+            <!-- REQUISITO: Título principal alterado de "Variações de Sacola" para "Mockup de Sacola" -->
+            <h2>Mockup de Sacola</h2>
             
             <form id="mockupForm">
                 <div class="form-group">
@@ -457,7 +459,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. LOGOTIPO CLIENTE (Motor sincronizado e estável contra quebras)
+            // 3. Logotipo Cliente 
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
@@ -493,7 +495,7 @@
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
-            // 6. INJEÇÃO DOS DADOS DA COMVIL BRINDES EM PROPORÇÃO COMPACTA MENOR
+            // 6. Rodapé Comvil Brindes
             if (incluirRodape) {
                 ctx.save();
                 
@@ -507,7 +509,7 @@
                 ctx.lineTo(canvas.width - 40, imgBase.naturalHeight);
                 ctx.stroke();
 
-                let altDesejada = 38; // Reduzido para achatar proporcionalmente o cabeçalho comercial
+                let altDesejada = 38; 
                 let offsetTextoX = 50;
 
                 if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
@@ -519,7 +521,6 @@
                 ctx.fillStyle = "#2c3e50";
                 ctx.textAlign = "left";
                 
-                // MUDANÇA: Letras menores e compactadas, alinhadas à altura exata de 38px da logo corporativa
                 ctx.font = "bold 15px sans-serif";
                 ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 42);
                 
@@ -538,6 +539,7 @@
                 logoY = imgBase.naturalHeight * 0.54;
             } else {
                 logoX = imgBase.naturalWidth * 0.50;
+                imgBase.naturalHeight * 0.53;
                 logoY = imgBase.naturalHeight * 0.53;
             }
         }
@@ -572,15 +574,13 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
-        // CORREÇÃO DEFINITIVA DO UPLOAD: Leitor síncrono binário estável (Evita sumiços ou telas brancas)
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                const arquivo = e.target.files[0];
-                elFileText.textContent = arquivo.name;
+            if (e.target.files && e.target.files) {
+                elFileText.textContent = e.target.files.name;
+                const arquivo = e.target.files;
 
                 const leitorBinario = new FileReader();
                 leitorBinario.onload = function(evt) {
-                    // Transforma o arquivo em um link Blob fixado na memória interna do navegador
                     const arrayDeDados = evt.target.result;
                     const blobEstruturado = new Blob([arrayDeDados], { type: arquivo.type });
                     const urlSegura = URL.createObjectURL(blobEstruturado);
@@ -592,11 +592,11 @@
                         resetarPosicaoLogoPadrao();
                         mockupGeradoComRodape = false;
                         btnDownloadLayout.disabled = true;
-                        processarETingirMockup(false); // Atualiza instantaneamente na tela
+                        processarETingirMockup(false); 
                     };
                     imgLogo.src = urlSegura;
                 };
-                leitorBinario.readAsArrayBuffer(arquivo); // Força a leitura síncrona estável
+                leitorBinario.readAsArrayBuffer(arquivo);
             }
         });
 
