@@ -1,82 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Lâminas Comerciais - Comvil Brindes</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        body {
-            background-color: #f3f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            display: flex;
-            width: 100%;
-            max-width: 1150px;
-            gap: 30px;
-            align-items: center;
-        }
-
-        /* Painel Lateral de Controle */
-        .form-container {
-            background-color: #ffffff;
-            padding: 30px 25px;
-            border-radius: 12px;
-            width: 42%;
-            min-width: 350px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-            max-height: 95vh;
-            overflow-y: auto;
-        }
-
-        h2 {
-            color: #003366;
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eaeaea;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: #555555;
-            margin-bottom: 8px;
-        }
-
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #cccccc;
-            border-radius: 6px;
-            background-color: #ffffff;
-            color: #333333;
-            font-size: 14px;
-            outline: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://w3.org' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 14px;
-        }
         .papel-triplo-wrapper {
             display: flex;
             gap: 10px;
@@ -129,7 +50,7 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* REQUISITO: Ajustado para 9 colunas (18 cores divididas perfeitamente em exatamente 2 linhas) */
+        /* Grid de Cordão em 2 Linhas */
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -272,7 +193,6 @@
 
     <div class="container">
         <div class="form-container">
-            <!-- REQUISITO: Título principal alterado de "Variações de Sacola" para "Mockup de Sacola" -->
             <h2>Mockup de Sacola</h2>
             
             <form id="mockupForm">
@@ -459,7 +379,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. Logotipo Cliente 
+            // 3. LOGOTIPO CLIENTE
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
@@ -539,7 +459,6 @@
                 logoY = imgBase.naturalHeight * 0.54;
             } else {
                 logoX = imgBase.naturalWidth * 0.50;
-                imgBase.naturalHeight * 0.53;
                 logoY = imgBase.naturalHeight * 0.53;
             }
         }
@@ -574,16 +493,15 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
+        // AMARRAÇÃO CORRIGIDA: Usa FileReader com readAsDataURL para manter a string gravada de forma permanente
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files) {
-                elFileText.textContent = e.target.files.name;
-                const arquivo = e.target.files;
+            if (e.target.files && e.target.files[0]) {
+                const arquivo = e.target.files[0];
+                elFileText.textContent = arquivo.name;
 
-                const leitorBinario = new FileReader();
-                leitorBinario.onload = function(evt) {
-                    const arrayDeDados = evt.target.result;
-                    const blobEstruturado = new Blob([arrayDeDados], { type: arquivo.type });
-                    const urlSegura = URL.createObjectURL(blobEstruturado);
+                const leitorBase64 = new FileReader();
+                leitorBase64.onload = function(evt) {
+                    const dadosStringBase64 = evt.target.result; // Converte em código string permanente
 
                     logoCarregada = false;
                     imgLogo = new Image();
@@ -594,9 +512,9 @@
                         btnDownloadLayout.disabled = true;
                         processarETingirMockup(false); 
                     };
-                    imgLogo.src = urlSegura;
+                    imgLogo.src = dadosStringBase64; // Injeta de forma robusta
                 };
-                leitorBinario.readAsArrayBuffer(arquivo);
+                leitorBase64.readAsDataURL(arquivo); // Método blindado contra descarte de memória
             }
         });
 
