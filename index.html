@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Ordem de Camadas Realista</title>
+    <title>Variações de Sacola - Painel Otimizado</title>
     <style>
         * {
             margin: 0;
@@ -29,7 +29,7 @@
             align-items: center;
         }
 
-        /* Painel Lateral */
+        /* Painel Lateral de Controle */
         .form-container {
             background-color: #ffffff;
             padding: 30px 25px;
@@ -37,7 +37,7 @@
             width: 40%;
             min-width: 340px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            max-height: 90vh;
+            max-height: 95vh;
             overflow-y: auto;
         }
 
@@ -82,17 +82,19 @@
             border-color: #003366;
         }
 
+        /* Divisão 50/50 Cor Papel e Botão Kraft */
         .color-picker-wrapper {
             display: flex;
             gap: 10px;
             align-items: center;
+            width: 100%;
         }
 
         input[type="color"] {
             -webkit-appearance: none;
             border: 1px solid #cccccc;
-            width: 50px;
-            height: 40px;
+            width: 50%; /* Ocupa metade do espaço */
+            height: 42px;
             border-radius: 6px;
             cursor: pointer;
             background: none;
@@ -103,11 +105,11 @@
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
         .btn-kraft {
-            flex-grow: 1;
+            width: 50%; /* Ocupa a outra metade do espaço */
+            height: 42px;
             background-color: #c2a67a;
             color: #ffffff;
             border: none;
-            padding: 11px;
             font-size: 13px;
             font-weight: 600;
             border-radius: 6px;
@@ -118,23 +120,23 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Grid para os Quadradinhos de Cordão */
+        /* Grid Compacto de Cordão para caber em exatamente 3 Linhas */
         .cordao-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
+            grid-template-columns: repeat(7, 1fr); /* 7 colunas geram 3 linhas perfeitas para 21 cores */
+            gap: 6px;
             background-color: #f8fafc;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
         }
 
         .cordao-box {
             aspect-ratio: 1 / 1;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             border: 2px solid #cbd5e1;
-            transition: all 0.15s ease-in-out;
+            transition: all 0.1s ease-in-out;
         }
 
         .cordao-box:hover {
@@ -144,8 +146,7 @@
 
         .cordao-box.active {
             border-color: #003366;
-            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.2);
-            transform: scale(1.05);
+            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15);
         }
 
         .cordao-box[style*="#ffffff"] { border-color: #e2e8f0; }
@@ -191,7 +192,7 @@
             text-overflow: ellipsis;
         }
 
-        /* Quadro de Visualização Fluido */
+        /* Quadro de Visualização Original */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -225,7 +226,6 @@
         @media (max-width: 768px) {
             .container { flex-direction: column; }
             .form-container { width: 100%; max-height: none; }
-            .cordao-grid { grid-template-columns: repeat(7, 1fr); }
         }
     </style>
 </head>
@@ -244,7 +244,7 @@
                 </select>
             </div>
 
-            <!-- 2. Cor do Papel -->
+            <!-- 2. Cor do Papel (Dividido 50/50) -->
             <div class="form-group">
                 <label>Cor de Papel *</label>
                 <div class="color-picker-wrapper">
@@ -253,7 +253,7 @@
                 </div>
             </div>
 
-            <!-- 3. Painel de Escolha com Quadradinhos -->
+            <!-- 3. Cor do Cordão (3 Linhas de Quadradinhos) -->
             <div class="form-group">
                 <label>Cor de Cordão (Mostruário P.P.) *</label>
                 <div class="cordao-grid" id="cordaoGrid"></div>
@@ -298,26 +298,16 @@
         let corCordaoSelecionada = "#ffffff"; 
 
         const mostruarioCordao = [
-            { nome: "Branco", hex: "#ffffff" },
-            { nome: "Preto", hex: "#1a1a1a" },
-            { nome: "Cinza Prata", hex: "#8a8a8a" },
-            { nome: "Azul Anil", hex: "#001fb3" },
-            { nome: "Azul Royal", hex: "#0047ab" },
-            { nome: "Azul BB", hex: "#7ec8e3" },
-            { nome: "Verde Musgo", hex: "#2e3b2e" },
-            { nome: "Verde Cabaré", hex: "#007a5e" },
-            { nome: "Verde Bandeira", hex: "#005c29" },
-            { nome: "Verde Pistache", hex: "#6bb343" },
-            { nome: "Verde Limão", hex: "#99cc33" },
-            { nome: "Verde BB", hex: "#8ee5c4" },
-            { nome: "Roxo", hex: "#4b0082" },
-            { nome: "Violeta", hex: "#7f00ff" },
-            { nome: "Pink", hex: "#d11d5b" },
-            { nome: "Rosa BB", hex: "#fca1c1" },
-            { nome: "Laranja", hex: "#ff4500" },
-            { nome: "Amarelo BB", hex: "#fae96c" },
-            { nome: "Vinho", hex: "#5c0632" },
-            { nome: "Bege", hex: "#cfa076" },
+            { nome: "Branco", hex: "#ffffff" }, { nome: "Preto", hex: "#1a1a1a" },
+            { nome: "Cinza Prata", hex: "#8a8a8a" }, { nome: "Azul Anil", hex: "#001fb3" },
+            { nome: "Azul Royal", hex: "#0047ab" }, { nome: "Azul BB", hex: "#7ec8e3" },
+            { nome: "Verde Musgo", hex: "#2e3b2e" }, { nome: "Verde Cabaré", hex: "#007a5e" },
+            { nome: "Verde Bandeira", hex: "#005c29" }, { nome: "Verde Pistache", hex: "#6bb343" },
+            { nome: "Verde Limão", hex: "#99cc33" }, { nome: "Verde BB", hex: "#8ee5c4" },
+            { nome: "Roxo", hex: "#4b0082" }, { nome: "Violeta", hex: "#7f00ff" },
+            { nome: "Pink", hex: "#d11d5b" }, { nome: "Rosa BB", hex: "#fca1c1" },
+            { nome: "Laranja", hex: "#ff4500" }, { nome: "Amarelo BB", hex: "#fae96c" },
+            { nome: "Vinho", hex: "#5c0632" }, { nome: "Bege", hex: "#cfa076" },
             { nome: "Rami", hex: "#8c7661" }
         ];
 
@@ -357,7 +347,7 @@
             return buffer;
         }
 
-        // MOTOR DE CAMADAS EXATO CONFORME A SUA ORIENTAÇÃO
+        // MONTAGEM CORRIGIDA: TAMANHO FIXO ORIGINAL + ORDEM ESTRETA DE CAMADAS
         function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
@@ -366,25 +356,21 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Fundo neutro cinza de estúdio
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // CAMADA 1: Pintura da Cor Sólida do Papel
+            // CAMADA 1: Pintura da Cor do Papel
             if (imgBase.complete) {
                 const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
                 const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // CAMADA 2: LOGOTIPO DO CLIENTE (Aplicada por cima do papel e por baixo do cordão/sombra)
+            // CAMADA 2: LOGOTIPO DO CLIENTE (Aplicada por cima da cor da sacola e por baixo do cordão/sombra)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
-                
-                // Centralização base no corpo da sacola
                 ctx.translate(canvas.width * 0.50, canvas.height * 0.53);
                 
-                // Escala proporcional a 35% da largura original do seu arquivo
                 let larguraLogo = canvas.width * 0.35;
                 let alturaLogo = (imgLogo.height / imgLogo.width) * larguraLogo;
                 
@@ -392,13 +378,13 @@
                 ctx.restore();
             }
 
-            // CAMADA 3: Pintura da Cor Sólida do Cordão (Sobrepõe as rebarbas da logo se houver)
+            // CAMADA 3: Pintura da Cor Sólida do Cordão (Passa por cima das rebarbas da logo)
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // CAMADA 4: MULTIPLICAÇÃO DA SOMBRA REAL POR CIMA DE TUDO (Une as dobras, o papel, a logo e a alça)
+            // CAMADA 4: MULTIPLICAÇÃO DAS SOMBRAS POR CIMA DE TUDO (Une as peças e dobras de forma real)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgSombra, 0, 0);
@@ -428,6 +414,7 @@
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
+        // Upload via FileReader nativo injetado diretamente no motor do Canvas
         elInputLogo.addEventListener('change', function() {
             if (this.files && this.files) {
                 elFileText.textContent = this.files.name;
