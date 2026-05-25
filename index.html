@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup - Estúdio JPEG Premium</title>
+    <title>Gerador de Lâminas Comerciais - Premium</title>
     <style>
         * {
             margin: 0;
@@ -24,7 +24,7 @@
         .container {
             display: flex;
             width: 100%;
-            max-width: 1100px;
+            max-width: 1150px;
             gap: 30px;
             align-items: center;
         }
@@ -129,7 +129,6 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Grid de Cordão Ajustado para 6 Colunas (3 Linhas perfeitas para 18 cores) */
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -151,7 +150,6 @@
         .cordao-box:hover { transform: scale(1.1); border-color: #64748b; }
         .cordao-box.active { border-color: #003366; box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15); }
 
-        /* Sliders */
         input[type="range"] {
             width: 100%;
             height: 6px;
@@ -162,7 +160,6 @@
             cursor: pointer;
         }
 
-        /* Botão de Upload */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -202,25 +199,29 @@
             text-overflow: ellipsis;
         }
 
-        .btn-download {
+        /* Botões de Ação Separados */
+        .btn-action {
             width: 100%;
-            background-color: #003366;
-            color: #ffffff;
             border: none;
-            padding: 14px;
+            padding: 13px;
             font-size: 14px;
             font-weight: 700;
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s;
-            margin-top: 10px;
+            margin-top: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
         }
 
+        .btn-generate { background-color: #28a745; color: #ffffff; }
+        .btn-generate:hover { background-color: #218838; }
+
+        .btn-download { background-color: #003366; color: #ffffff; }
         .btn-download:hover { background-color: #002244; }
+        .btn-download:disabled { background-color: #bdc3c7; cursor: not-allowed; }
 
         /* Visualizador Direito */
         .preview-container {
@@ -297,7 +298,6 @@
                     </div>
                 </div>
 
-                <!-- CORREÇÃO: Nome do campo alterado de "Cor de Cordão" para "Cordão" -->
                 <div class="form-group">
                     <label>Cordão *</label>
                     <div class="cordao-grid" id="cordaoGrid"></div>
@@ -322,7 +322,9 @@
                     <input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5">
                 </div>
 
-                <button type="submit" class="btn-download">💾 Descarregar Layout</button>
+                <!-- CORREÇÃO: Divisão clara de botões para fluxo de geração em JPEG -->
+                <button type="button" id="btnGenerateJPEG" class="btn-action btn-generate">⚙️ Gerar Mockup (JPEG)</button>
+                <button type="submit" id="btnDownloadLayout" class="btn-action btn-download" disabled>💾 Descarregar Layout</button>
             </form>
         </div>
 
@@ -349,15 +351,20 @@
         const elLogoZoom = document.getElementById('logo-zoom');
         const elLogoGiro = document.getElementById('logo-giro');
         const elForm = document.getElementById('mockupForm');
+        const btnGenerateJPEG = document.getElementById('btnGenerateJPEG');
+        const btnDownloadLayout = document.getElementById('btnDownloadLayout');
 
         let imgBase = new Image();       
         let imgFrente = new Image();     
         let imgLateral = new Image();    
         let imgCordao = new Image();     
         let imgLogo = new Image();
+        let imgEmpresa = new Image(); // Arquivo logo-empresa.png da raiz
         
         let modoKraftAtivo = false;
         let logoCarregada = false;
+        let logoEmpresaPronta = false;
+        let mockupGeradoComRodape = false;
         let corCordaoSelecionada = "#ffffff"; 
 
         let logoX = 0; 
@@ -369,32 +376,22 @@
         let logoAtualWidth = 0;
         let logoAtualHeight = 0;
 
-        // CORREÇÃO: Nova tabela com os códigos hexadecimais extraídos fielmente da sua foto (18 tons, sem numeração)
         const mostruarioCordao = [
-            // Linha 1 da foto
-            { nome: "Branco", hex: "#ffffff" },
-            { nome: "Preto", hex: "#000000" },
-            { nome: "Cinza Claro", hex: "#8c8c8c" },
-            { nome: "Azul Caneta", hex: "#0b2bc6" },
-            { nome: "Azul Claro", hex: "#7ec8e3" },
-            { nome: "Verde Escuro", hex: "#006129" },
-            
-            // Linha 2 da foto
-            { nome: "Verde Pistache", hex: "#74b74b" },
-            { nome: "Vermelho", hex: "#e5121c" },
-            { nome: "Rosa BB", hex: "#ffa3cc" },
-            { nome: "Pink", hex: "#cb1661" },
-            { nome: "Laranja", hex: "#ff5100" },
-            { nome: "Amarelo Ouro", hex: "#ffc800" },
-            
-            // Linha 3 da foto
-            { nome: "Amarelo Limão", hex: "#fff700" },
-            { nome: "Roxo", hex: "#520188" },
-            { nome: "Violeta Claro", hex: "#8700ff" },
-            { nome: "Vinho Escuro", hex: "#510224" },
-            { nome: "Marrom Café", hex: "#86725e" },
-            { nome: "Bege Kraft", hex: "#cba277" }
+            { nome: "Branco", hex: "#ffffff" }, { nome: "Preto", hex: "#000000" },
+            { nome: "Cinza Claro", hex: "#8c8c8c" }, { nome: "Azul Caneta", hex: "#0b2bc6" },
+            { nome: "Azul Claro", hex: "#7ec8e3" }, { nome: "Verde Escuro", hex: "#006129" },
+            { nome: "Verde Pistache", hex: "#74b74b" }, { nome: "Vermelho", hex: "#e5121c" },
+            { nome: "Rosa BB", hex: "#ffa3cc" }, { nome: "Pink", hex: "#cb1661" },
+            { nome: "Laranja", hex: "#ff5100" }, { nome: "Amarelo Ouro", hex: "#ffc800" },
+            { nome: "Amarelo Limão", hex: "#fff700" }, { nome: "Roxo", hex: "#520188" },
+            { nome: "Violeta Claro", hex: "#8700ff" }, { nome: "Vinho Escuro", hex: "#510224" },
+            { nome: "Marrom Café", hex: "#86725e" }, { nome: "Bege Kraft", hex: "#cba277" }
         ];
+
+        // Carrega previamente a marca da sua empresa salva na raiz
+        imgEmpresa.crossOrigin = "anonymous";
+        imgEmpresa.onload = function() { logoEmpresaPronta = true; };
+        imgEmpresa.src = 'logo-empresa.png';
 
         function renderizarGradeCordoes() {
             elCordaoGrid.innerHTML = "";
@@ -403,16 +400,15 @@
                 box.className = "cordao-box";
                 box.style.backgroundColor = cor.hex;
                 box.title = cor.nome;
-
                 if (cor.hex === corCordaoSelecionada) box.classList.add('active');
-
                 box.addEventListener('click', function() {
                     document.querySelectorAll('.cordao-box').forEach(b => b.classList.remove('active'));
                     box.classList.add('active');
                     corCordaoSelecionada = cor.hex;
-                    processarETingirMockup();
+                    mockupGeradoComRodape = false;
+                    btnDownloadLayout.disabled = true;
+                    processarETingirMockup(false);
                 });
-
                 elCordaoGrid.appendChild(box);
             });
         }
@@ -422,7 +418,6 @@
             buffer.width = canvas.width;
             buffer.height = canvas.height;
             const bCtx = buffer.getContext('2d');
-
             if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
                 bCtx.drawImage(imgMascara, 0, 0);
                 bCtx.globalCompositeOperation = 'source-in';
@@ -432,47 +427,50 @@
             return buffer;
         }
 
-        function processarETingirMockup() {
+        // MOTOR REESTRUTURADO: SUPORTA CHRONO-FILA PARA PINTAR O RODAPÉ CORPORATIVO
+        function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
+            // Se for gerar o arquivo final, estica a base do Canvas para criar uma margem de rodapé limpa
             canvas.width = imgBase.naturalWidth;
-            canvas.height = imgBase.naturalHeight;
+            canvas.height = incluirRodape ? imgBase.naturalHeight + 140 : imgBase.naturalHeight;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Preenche fundo automático cinza claro
+            // Pinta o fundo cinza claro automático universal
             ctx.fillStyle = "#e8e8e8";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Sombra projetada densa e forte
+            // Sombra projetada densa e realista
             ctx.save();
             ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
-            ctx.shadowBlur = canvas.width * 0.04;    
-            ctx.shadowOffsetX = canvas.width * 0.015; 
-            ctx.shadowOffsetY = canvas.height * 0.025; 
+            ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
+            ctx.shadowOffsetX = imgBase.naturalWidth * 0.015; 
+            ctx.shadowOffsetY = imgBase.naturalHeight * 0.025; 
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
-            // 1. Frente (sacola_X_frente.png)
+            // 1. Frente
             if (imgFrente.complete && imgFrente.naturalWidth > 0) {
                 const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
                 const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
                 ctx.drawImage(camadaFrente, 0, 0);
             }
 
-            // 2. Lateral (sacola_X_lateral.png)
+            // 2. Lateral
             if (imgLateral.complete && imgLateral.naturalWidth > 0) {
                 const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
                 const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. Logotipo (Perspectiva profunda + afunilamento de 7% à direita)
+            // 3. Logotipo Cliente (Com afunilamento real e travas de segurança)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
                 
                 let percentualZoom = elLogoZoom.value / 100;
-                logoAtualWidth = canvas.width * percentualZoom;
+                logoAtualWidth = imgBase.naturalWidth * percentualZoom;
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
@@ -490,17 +488,42 @@
                 ctx.restore();
             }
 
-            // 4. Cordões (sacola_X_cordao.png)
+            // 4. Cordões
             if (imgCordao.complete && imgCordao.naturalWidth > 0) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 5. Sombras de Relevo por Cima de tudo (sacola_X_base.png)
+            // 5. Sombras de Relevo fotográficas
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
+
+            // 6. INJEÇÃO DO RODAPÉ CORPORATIVO AUTOMÁTICO (Apenas na compilação do botão JPEG)
+            if (incluirRodape) {
+                // Desenha barra branca de divisão comercial na base
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 140);
+
+                // Insere a marca logo-empresa.png se estiver carregada
+                if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
+                    let altDesejada = 50;
+                    let largCalculada = (imgEmpresa.naturalWidth / imgEmpresa.naturalHeight) * altDesejada;
+                    // Posiciona à esquerda do rodapé
+                    ctx.drawImage(imgEmpresa, 40, imgBase.naturalHeight + 45, largCalculada, altDesejada);
+                }
+
+                // Escreve os dados textuais de contato corporativo do lado direito
+                ctx.fillStyle = "#333333";
+                ctx.font = "bold 20px sans-serif";
+                ctx.textAlign = "left";
+                ctx.fillText("LÂMINA DE PROPOSTA COMERCIAL", 40 + (logoEmpresaPronta ? 180 : 0), imgBase.naturalHeight + 65);
+                
+                ctx.fillStyle = "#666666";
+                ctx.font = "16px sans-serif";
+                ctx.fillText("Contato imediato via site corporativo / Layout sujeito a aprovação gráfica.", 40 + (logoEmpresaPronta ? 180 : 0), imgBase.naturalHeight + 95);
+            }
         }
         function resetarPosicaoLogoPadrao() {
             if (!imgBase.naturalWidth) return;
@@ -521,7 +544,9 @@
                 carregadas++;
                 if (carregadas === 4) {
                     resetarPosicaoLogoPadrao();
-                    processarETingirMockup();
+                    mockupGeradoComRodape = false;
+                    btnDownloadLayout.disabled = true;
+                    processarETingirMockup(false);
                 }
             }
 
@@ -548,11 +573,12 @@
                 
                 logoCarregada = false;
                 imgLogo = new Image(); 
-                
                 imgLogo.onload = function() {
                     logoCarregada = true;
                     resetarPosicaoLogoPadrao();
-                    processarETingirMockup();
+                    mockupGeradoComRodape = false;
+                    btnDownloadLayout.disabled = true;
+                    processarETingirMockup(false);
                 };
                 imgLogo.src = blobURL;
             }
@@ -574,6 +600,8 @@
                 offsetMouseX = mouse.x - logoX;
                 offsetMouseY = mouse.y - logoY;
                 canvas.style.cursor = "grabbing";
+                mockupGeradoComRodape = false;
+                btnDownloadLayout.disabled = true;
             }
         });
 
@@ -583,7 +611,7 @@
             if (arrastandoLogo) {
                 logoX = mouse.x - offsetMouseX;
                 logoY = mouse.y - offsetMouseY;
-                processarETingirMockup(); 
+                processarETingirMockup(false); 
             } else {
                 if (mouse.x >= logoX - logoAtualWidth/2 && mouse.x <= logoX + logoAtualWidth/2 &&
                     mouse.y >= logoY - logoAtualHeight/2 && mouse.y <= logoY + logoAtualHeight/2) {
@@ -601,26 +629,37 @@
             }
         });
 
+        // O BOTÃO DE GERAR JPEG: Processa e mostra na tela o rodapé comercial antes de permitir o download
+        btnGenerateJPEG.addEventListener('click', function() {
+            processarETingirMockup(true); // Ativa a injeção do rodapé corporativo
+            mockupGeradoComRodape = true;
+            btnDownloadLayout.disabled = false; // Libera o botão de baixar arquivo
+        });
+
         elBtnKraft.addEventListener('click', function() {
             modoKraftAtivo = !modoKraftAtivo;
             if (modoKraftAtivo) this.classList.add('active');
             else this.classList.remove('active');
-            processarETingirMockup();
+            mockupGeradoComRodape = false;
+            btnDownloadLayout.disabled = true;
+            processarETingirMockup(false);
         });
 
-        elCorFrente.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); processarETingirMockup(); });
-        elCorLateral.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); processarETingirMockup(); });
+        elCorFrente.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
+        elCorLateral.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
         
-        elLogoZoom.addEventListener('input', processarETingirMockup);
-        elLogoGiro.addEventListener('input', processarETingirMockup);
+        elLogoZoom.addEventListener('input', () => { mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
+        elLogoGiro.addEventListener('input', () => { mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
         elModelo.addEventListener('change', carregarArquivosDoServidor);
 
+        // O BOTÃO DE DOWNLOAD: Descarrega nativamente o arquivo consolidado em .jpg
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            processarETingirMockup();
+            if (!mockupGeradoComRodape) return;
+
             const link = document.createElement('a');
-            const sentido = elModelo.value;
-            link.download = `mockup-layout-${sentido}.jpg`;
+            link.download = `proposta-sacola-${elModelo.value}.jpg`;
+            // Converte o canvas com rodapé em JPEG puro estável de qualidade máxima
             link.href = canvas.toDataURL("image/jpeg", 1.0);
             link.click();
         });
