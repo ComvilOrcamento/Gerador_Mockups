@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Mockup Realista 3D</title>
     
-    <!-- Bibliotecas 3D e de captura necessárias -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Biblioteca HTML2Canvas para consolidação e salvamento seguro -->
     <script src="https://cloudflare.com"></script>
 
     <style>
@@ -34,6 +33,7 @@
             align-items: stretch;
         }
 
+        /* Formulário Lateral Esquerdo */
         .form-container {
             background-color: #ffffff;
             padding: 30px 25px;
@@ -78,6 +78,10 @@
             background-repeat: no-repeat;
             background-position: right 12px center;
             background-size: 14px;
+        }
+
+        select:focus {
+            border-color: #003366;
         }
 
         .file-input-wrapper {
@@ -129,8 +133,14 @@
             border-radius: 6px;
             cursor: pointer;
             margin-top: 15px;
+            transition: background-color 0.2s;
         }
 
+        .btn-submit:hover {
+            background-color: #002244;
+        }
+
+        /* Área do Visualizador Direita */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -144,23 +154,80 @@
 
         .preview-box {
             width: 100%;
-            max-width: 500px;
-            aspect-ratio: 1 / 1;
+            height: 100%;
             border: 1px solid #e0e0e0;
             border-radius: 6px;
-            position: relative;
-            overflow: hidden;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
-        #canvas3D {
+        /* Estrutura de Camadas HTML Clássicas */
+        .mockup-layers {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .layer {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            display: block;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        /* Máscaras de pintura dinâmica */
+        .layer-mascara-sacola {
+            z-index: 2;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+        }
+
+        .layer-cor-sacola { z-index: 1; }
+
+        .layer-mascara-cordao {
+            z-index: 4;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+        }
+
+        .layer-cor-cordao { z-index: 3; }
+
+        /* A foto real por cima de tudo multiplicando sombras reais */
+        .layer-base {
+            z-index: 5;
+            mix-blend-mode: multiply; 
+        }
+
+        /* Aplicação da logo do cliente com distorção tridimensional realista */
+        .layer-logo {
+            position: absolute;
+            z-index: 6;
+            filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.12)); 
+            mix-blend-mode: multiply;
         }
 
         @media (max-width: 768px) {
             .container { flex-direction: column; }
             .form-container { width: 100%; }
+            .mockup-layers { min-height: 350px; }
         }
     </style>
 </head>
@@ -169,6 +236,7 @@
     <div class="container">
         <div class="form-container">
             <h2>Mockup Corrigido 3D</h2>
+            
             <form id="mockupForm">
                 <div class="form-group">
                     <label for="modelo">Modelo da Sacola *</label>
@@ -212,166 +280,132 @@
         </div>
 
         <div class="preview-container">
-            <div class="preview-box" id="mockupContainer">
-                <!-- O renderizador 3D do Three.js injetará o canvas real aqui -->
-                <div id="canvas3D"></div>
+            <div class="preview-box">
+                <div class="mockup-layers" id="mockupContainer">
+                    
+                    <div class="layer layer-cor-sacola" id="layerCorSacola"></div>
+                    <div class="layer layer-mascara-sacola" id="maskSacola"></div>
+                    
+                    <div class="layer layer-cor-cordao" id="layerCorCordao"></div>
+                    <div class="layer layer-mascara-cordao" id="maskCordao"></div>
+                    
+                    <img class="layer layer-base" id="imgBase" src="horizontal-sacola-branca.png" alt="Base">
+                    
+                    <img class="layer layer-logo" id="previewLogo" src="" alt="" style="display:none;">
+
+                </div>
             </div>
         </div>
     </div>
+    <!-- LOGICA JAVASCRIPT -->
     <script>
         const elModelo = document.getElementById('modelo');
         const elCorSacola = document.getElementById('cor-sacola');
         const elCorCordao = document.getElementById('cordao');
         const elInputLogo = document.getElementById('logo');
         const elFileText = document.getElementById('file-text');
+
+        const imgBase = document.getElementById('imgBase');
+        const maskSacola = document.getElementById('maskSacola');
+        const maskCordao = document.getElementById('maskCordao');
+        const previewLogo = document.getElementById('previewLogo');
         const elForm = document.getElementById('mockupForm');
-        const container3D = document.getElementById('canvas3D');
+        const mockupContainer = document.getElementById('mockupContainer');
 
-        let scene, camera, renderer;
-        let sacolaMesh, cordaoMesh, texturaLogo;
-        const textureLoader = new THREE.TextureLoader();
-
-        // Inicializa o ambiente 3D Realista
-        function init3D() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color('#ffffff');
-
-            camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-            camera.position.set(0, 0, 8);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-            renderer.setSize(500, 500);
-            renderer.shadowMap.enabled = true;
-            container3D.appendChild(renderer.domElement);
-
-            // Luzes realistas (Estúdio Fotográfico)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-            dirLight.position.set(5, 10, 7);
-            scene.add(dirLight);
-
-             carregarModelos();
-            animate();
-        }
-
-        function carregarModelos() {
-            // Remove objetos anteriores se existirem mudando de modelo
-            if(sacolaMesh) scene.remove(sacolaMesh);
-            if(cordaoMesh) scene.remove(cordaoMesh);
-
+        function atualizarMockup() {
             const modelo = elModelo.value;
+            const corSacolaHex = elCorSacola.value;
+            const corCordaoHex = elCorCordao.value;
 
-            // Criando geometria tridimensional paramétrica (Planos com profundidade)
-            let largura = modelo === 'horizontal' ? 4 : 2.8;
-            let altura = modelo === 'horizontal' ? 2.8 : 4;
-            
-            const sacolaGeo = new THREE.BoxGeometry(largura, altura, 1, 4, 4, 4);
-            
-            // Materiais profissionais que reagem à luz e relevo
-            const sacolaMat = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(elCorSacola.value),
-                roughness: 0.5,
-                metalness: 0.1
-            });
-
-            const cordaoMat = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(elCorCordao.value),
-                roughness: 0.8
-            });
-
-            // Carrega os mapas de sombra e máscara reais fornecidos por você
-            const mapaSombraUrl = modelo === 'horizontal' ? 'horizontal-sacola-branca.png' : 'sacola_vertical_sombras.png';
-            textureLoader.load(mapaSombraUrl, function(tex) {
-                sacolaMat.map = tex;
-                sacolaMat.needsUpdate = true;
-            });
-
-            sacolaMesh = new THREE.Mesh(sacolaGeo, sacolaMat);
-            
-            // Aplica leve rotação para simular o ângulo 3D da foto original
-            if(modelo === 'horizontal') {
-                sacolaMesh.rotation.set(0.1, -0.4, -0.03);
+            if (modelo === 'vertical') {
+                imgBase.src = 'sacola_vertical_sombras.png';
+                
+                maskSacola.style.webkitMaskImage = "url('sacola_vertical_mascara.png')";
+                maskSacola.style.maskImage = "url('sacola_vertical_mascara.png')";
+                
+                maskCordao.style.webkitMaskImage = "url('cordao_vertical_mascara.png')";
+                maskCordao.style.maskImage = "url('cordao_vertical_mascara.png')";
+                
+                // Configuração Retal / Plana para a Sacola Vertical Frontal
+                previewLogo.style.top = "52%";
+                previewLogo.style.left = "50%";
+                previewLogo.style.transform = "translate(-50%, -50%)"; 
+                previewLogo.style.maxWidth = "35%";
+                previewLogo.style.maxHeight = "35%";
             } else {
-                sacolaMesh.rotation.set(0.1, -0.2, 0);
+                imgBase.src = 'horizontal-sacola-branca.png';
+                
+                maskSacola.style.webkitMaskImage = "url('horizontal-sacola-mascara.png')";
+                maskSacola.style.maskImage = "url('horizontal-sacola-mascara.png')";
+                
+                maskCordao.style.webkitMaskImage = "url('horizontal-cordao-mascara.png')";
+                maskCordao.style.maskImage = "url('horizontal-cordao-mascara.png')";
+                
+                // Correção tridimensional exata baseada na imagem enviada da sacola inclinada
+                previewLogo.style.top = "50%"; 
+                previewLogo.style.left = "54%"; 
+                // skewY e rotate inclinam o logotipo acompanhando o plano exato das dobras do papel em perspectiva
+                previewLogo.style.transform = "translate(-50%, -50%) rotate(-1.5deg) skewY(-1.5deg)";
+                previewLogo.style.maxWidth = "38%";
+                previewLogo.style.maxHeight = "25%";
             }
 
-            scene.add(sacolaMesh);
-            atualizarLogoNaSacola();
+            maskSacola.style.backgroundColor = corSacolaHex;
+            maskCordao.style.backgroundColor = corCordaoHex;
         }
 
-        function atualizarLogoNaSacola() {
-            if (!texturaLogo || !sacolaMesh) return;
-
-            // Mapeia dinamicamente a logo como uma textura sobreposta no material 3D
-            sacolaMesh.material.roughness = 0.4;
-            
-            // Garante que o Three.js combine o fundo com a cor escolhida da sacola
-            texturaLogo.minFilter = THREE.LinearFilter;
-            sacolaMesh.material.bumpScale = 0.05;
-            
-            // Força a atualização do renderizador
-            sacolaMesh.material.needsUpdate = true;
-        }
-        // Renderizador contínuo 3D
-        function animate() {
-            requestAnimationFrame(animate);
-            if (renderer && scene && camera) {
-                renderer.render(scene, camera);
-            }
-        }
-
-        // Evento ao carregar logotipo do cliente
+        // Renderiza e injeta o logo em tempo de execução
         elInputLogo.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 elFileText.textContent = this.files[0].name;
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    textureLoader.load(e.target.result, function(tex) {
-                        texturaLogo = tex;
-                        atualizarLogoNaSacola();
-                    });
-                };
+                    previewLogo.src = e.target.result;
+                    previewLogo.style.display = 'block';
+                }
                 reader.readAsDataURL(this.files[0]);
             }
         });
 
-        // Atualização em tempo real de cores e formas
-        elModelo.addEventListener('change', carregarModelos);
-        
-        elCorSacola.addEventListener('change', () => {
-            if(sacolaMesh) sacolaMesh.material.color.set(elCorSacola.value);
-        });
-        
-        elCorCordao.addEventListener('change', () => {
-            if(cordaoMesh) cordaoMesh.material.color.set(elCorCordao.value);
-        });
-
-        // Processo de Captura do Canvas 3D e Download
+        elModelo.addEventListener('change', atualizarMockup);
+        elCorSacola.addEventListener('change', atualizarMockup);
+        elCorCordao.addEventListener('change', atualizarMockup);
+        // Renderizador nativo corrigido para exportar a sacola tridimensional com as cores
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
             const submitBtn = elForm.querySelector('.btn-submit');
-            submitBtn.textContent = "Renderizando 3D...";
+            const textoOriginal = submitBtn.textContent;
+            submitBtn.textContent = "Processando Imagem...";
             submitBtn.disabled = true;
 
-            setTimeout(() => {
-                // Captura o buffer direto do WebGL mantendo a iluminação realista 3D
-                const dataURL = renderer.domElement.toDataURL("image/png");
+            // Renderiza com escala duplicada para eliminar serrilhados no arquivo salvo
+            html2canvas(mockupContainer, {
+                backgroundColor: null, 
+                useCORS: true,        
+                scale: 2,
+                logging: false
+            }).then(canvas => {
+                const image = canvas.toDataURL("image/png");
                 
                 const link = document.createElement('a');
-                link.download = `mockup-3d-realista-${elModelo.value}.png`;
-                link.href = dataURL;
+                const nomeModelo = elModelo.value;
+                link.download = `mockup-realista-${nomeModelo}.png`;
+                link.href = image;
                 link.click();
 
-                submitBtn.textContent = "Gerar e Baixar Mockup";
+                submitBtn.textContent = textoOriginal;
                 submitBtn.disabled = false;
-            }, 800);
+            }).catch(error => {
+                console.error("Erro na compilação do Mockup:", error);
+                submitBtn.textContent = textoOriginal;
+                submitBtn.disabled = false;
+                alert("Ocorreu um erro ao salvar. Certifique-se de que os arquivos de imagem estão todos na raiz do servidor.");
+            });
         });
 
-        window.addEventListener('DOMContentLoaded', init3D);
+        window.addEventListener('DOMContentLoaded', atualizarMockup);
     </script>
 </body>
 </html>
