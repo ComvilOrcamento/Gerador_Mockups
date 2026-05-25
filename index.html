@@ -199,7 +199,6 @@
             text-overflow: ellipsis;
         }
 
-        /* Botões de Ação Separados */
         .btn-action {
             width: 100%;
             border: none;
@@ -387,7 +386,6 @@
             { nome: "Marrom Café", hex: "#86725e" }, { nome: "Bege Kraft", hex: "#cba277" }
         ];
 
-        // Carrega previamente a marca institucional Comvil Brindes da raiz
         imgEmpresa.crossOrigin = "anonymous";
         imgEmpresa.onload = function() { logoEmpresaPronta = true; };
         imgEmpresa.src = 'logo-empresa.png';
@@ -426,20 +424,17 @@
             return buffer;
         }
 
-        // MOTOR REESTRUTURADO: FUNDO CINZA UNIFICADO NO RODAPÉ + INFORMAÇÕES EXACTAS COMVIL BRINDES
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
             canvas.width = imgBase.naturalWidth;
-            canvas.height = incluirRodape ? imgBase.naturalHeight + 150 : imgBase.naturalHeight;
+            canvas.height = incluirRodape ? imgBase.naturalHeight + 110 : imgBase.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Preenche o fundo do layout completo com a cor cinza claro regulamentar
             ctx.fillStyle = "#e8e8e8";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Sombra projetada densa
             ctx.save();
             ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
             ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
@@ -462,7 +457,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. LOGOTIPO CLIENTE CORRIGIDO: Valida dimensões em tempo real para evitar falhas ou sumiço
+            // 3. LOGOTIPO CLIENTE (Motor sincronizado e estável contra quebras)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
@@ -492,52 +487,46 @@
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 5. Sombras de relevo multiplicadas por cima
+            // 5. Sombras
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
-            // 6. INJEÇÃO DO RODAPÉ COMVIL BRINDES (Mantém a cor cinza claro do layout de fundo conforme solicitado)
+            // 6. INJEÇÃO DOS DADOS DA COMVIL BRINDES EM PROPORÇÃO COMPACTA MENOR
             if (incluirRodape) {
                 ctx.save();
                 
-                // Força o fundo cinza claro unificado no espaço do rodapé para integrar ao layout
                 ctx.fillStyle = "#e8e8e8";
-                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 150);
+                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
 
-                // Desenha linha divisória sutil
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(30, imgBase.naturalHeight);
-                ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
+                ctx.moveTo(40, imgBase.naturalHeight);
+                ctx.lineTo(canvas.width - 40, imgBase.naturalHeight);
                 ctx.stroke();
 
-                // Insere logo-empresa.png se estiver disponível
+                let altDesejada = 38; // Reduzido para achatar proporcionalmente o cabeçalho comercial
                 let offsetTextoX = 50;
+
                 if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
-                    let altDesejada = 48;
                     let largCalculada = (imgEmpresa.naturalWidth / imgEmpresa.naturalHeight) * altDesejada;
-                    ctx.drawImage(imgEmpresa, 50, imgBase.naturalHeight + 50, largCalculada, altDesejada);
-                    offsetTextoX = 70 + largCalculada;
+                    ctx.drawImage(imgEmpresa, 50, imgBase.naturalHeight + 36, largCalculada, altDesejada);
+                    offsetTextoX = 65 + largCalculada;
                 }
 
-                // Escreve com fidelidade absoluta as informações fornecidas na imagem
-                ctx.fillStyle = "#333333";
+                ctx.fillStyle = "#2c3e50";
                 ctx.textAlign = "left";
                 
-                // Linha 1: Nome da empresa destacado
-                ctx.font = "bold 21px sans-serif";
-                ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 46);
+                // MUDANÇA: Letras menores e compactadas, alinhadas à altura exata de 38px da logo corporativa
+                ctx.font = "bold 15px sans-serif";
+                ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 42);
                 
-                // Linha 2: Documentos comerciais básicos
-                ctx.font = "15px sans-serif";
+                ctx.font = "12px sans-serif";
                 ctx.fillStyle = "#555555";
-                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", offsetTextoX, imgBase.naturalHeight + 76);
-                
-                // Linha 3: Telefones e canais de atendimento direto
-                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", offsetTextoX, imgBase.naturalHeight + 104);
+                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", offsetTextoX, imgBase.naturalHeight + 62);
+                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", offsetTextoX, imgBase.naturalHeight + 81);
                 
                 ctx.restore();
             }
@@ -583,21 +572,31 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
+        // CORREÇÃO DEFINITIVA DO UPLOAD: Leitor síncrono binário estável (Evita sumiços ou telas brancas)
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files) {
-                elFileText.textContent = e.target.files.name;
-                const blobURL = URL.createObjectURL(e.target.files);
-                
-                logoCarregada = false;
-                imgLogo = new Image(); 
-                imgLogo.onload = function() {
-                    logoCarregada = true;
-                    resetarPosicaoLogoPadrao();
-                    mockupGeradoComRodape = false;
-                    btnDownloadLayout.disabled = true;
-                    processarETingirMockup(false);
+            if (e.target.files && e.target.files[0]) {
+                const arquivo = e.target.files[0];
+                elFileText.textContent = arquivo.name;
+
+                const leitorBinario = new FileReader();
+                leitorBinario.onload = function(evt) {
+                    // Transforma o arquivo em um link Blob fixado na memória interna do navegador
+                    const arrayDeDados = evt.target.result;
+                    const blobEstruturado = new Blob([arrayDeDados], { type: arquivo.type });
+                    const urlSegura = URL.createObjectURL(blobEstruturado);
+
+                    logoCarregada = false;
+                    imgLogo = new Image();
+                    imgLogo.onload = function() {
+                        logoCarregada = true;
+                        resetarPosicaoLogoPadrao();
+                        mockupGeradoComRodape = false;
+                        btnDownloadLayout.disabled = true;
+                        processarETingirMockup(false); // Atualiza instantaneamente na tela
+                    };
+                    imgLogo.src = urlSegura;
                 };
-                imgLogo.src = blobURL;
+                leitorBinario.readAsArrayBuffer(arquivo); // Força a leitura síncrona estável
             }
         });
 
@@ -646,7 +645,6 @@
             }
         });
 
-        // Clique em gerar: une o mockup e as informações da Comvil Brindes na tela
         btnGenerateJPEG.addEventListener('click', function() {
             processarETingirMockup(true); 
             mockupGeradoComRodape = true;
@@ -669,7 +667,6 @@
         elLogoGiro.addEventListener('input', () => { mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
         elModelo.addEventListener('change', carregarArquivosDoServidor);
 
-        // Submissão final: descarrega em formato .jpg nativo estável
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
             if (!mockupGeradoComRodape) return;
