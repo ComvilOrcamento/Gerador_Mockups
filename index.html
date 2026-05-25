@@ -77,7 +77,6 @@
             background-position: right 12px center;
             background-size: 14px;
         }
-
         .papel-triplo-wrapper {
             display: flex;
             gap: 10px;
@@ -203,7 +202,6 @@
             text-overflow: ellipsis;
         }
 
-        /* Botão Descarregar Layout */
         .btn-download {
             width: 100%;
             background-color: #003366;
@@ -222,11 +220,9 @@
             gap: 8px;
         }
 
-        .btn-download:hover {
-            background-color: #002244;
-        }
+        .btn-download:hover { background-color: #002244; }
 
-        /* Quadro de Visualização Direito com Sombras Fina */
+        /* Visualizador Direito */
         .preview-container {
             flex-grow: 1;
             padding: 10px;
@@ -274,7 +270,6 @@
 <body>
 
     <div class="container">
-        <!-- Painel Lateral -->
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
@@ -322,7 +317,22 @@
                 </div>
 
                 <div class="form-group">
-<!-- LOGICA JAVASCRIPT CORRIGIDA -->
+                    <label for="logo-giro">Giro do Logotipo (Rotação)</label>
+                    <input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5">
+                </div>
+
+                <button type="submit" class="btn-download">💾 Descarregar Layout</button>
+            </form>
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-box">
+                <canvas id="mockupCanvas"></canvas>
+            </div>
+            <span class="hint-text">💡 Arraste com o mouse para mover / Use as barras para zoom e giro</span>
+        </div>
+    </div>
+    <!-- LOGICA JAVASCRIPT -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -408,31 +418,29 @@
             return buffer;
         }
 
-        // PROCESSO ESTRETO DE CAMADAS + PROFUNDIDADE DIREITA ACENTUADA
         function processarETingirMockup() {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
             canvas.width = imgBase.naturalWidth;
             canvas.height = imgBase.naturalHeight;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // CAMADA 1A: Frente (sacola_X_frente.png)
-            if (imgFrente.complete) {
+            // 1. Frente
+            if (imgFrente.complete && imgFrente.naturalWidth > 0) {
                 const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
                 const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
                 ctx.drawImage(camadaFrente, 0, 0);
             }
 
-            // CAMADA 1B: Lateral (sacola_X_lateral.png)
-            if (imgLateral.complete) {
+            // 2. Lateral
+            if (imgLateral.complete && imgLateral.naturalWidth > 0) {
                 const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
                 const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // CAMADA 2: LOGOTIPO DO CLIENTE (Com profundidade acentuada para o lado direito)
-            if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
+            // 3. Logotipo (Perspectiva profunda à direita)
+            if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
                 
@@ -443,7 +451,6 @@
                 
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 
-                // Aplica a perspectiva tridimensional forte (Lado direito vai encolhendo)
                 if (elModelo.value === 'horizontal') {
                     ctx.rotate((-1.8 * Math.PI / 180) + giroManualRad);
                     ctx.transform(1, 0.058, 0, 1, 0, 0); 
@@ -456,13 +463,13 @@
                 ctx.restore();
             }
 
-            // CAMADA 3: Cordões (sacola_X_cordao.png)
-            if (imgCordao.complete) {
+            // 4. Cordões
+            if (imgCordao.complete && imgCordao.naturalWidth > 0) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // CAMADA 4: Sombra Fotográfica por Cima de tudo (sacola_X_base.png)
+            // 5. Sombras de Base
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0);
@@ -501,20 +508,16 @@
             imgLateral.onload = verificarPronto;
             imgCordao.onload = verificarPronto;
 
-            // Busca os arquivos direto na raiz seguindo sua nomenclatura oficial
-            imgBase.src = `sacola_${sentido}_base.png`;
-            imgFrente.src = `sacola_${sentido}_frente.png`;
-            imgLateral.src = `sacola_${sentido}_lateral.png`;
-            imgCordao.src = `sacola_${sentido}_cordao.png`;
+            imgBase.src = `sacola_${sentido}_base.png?v=${Date.now()}`;
+            imgFrente.src = `sacola_${sentido}_frente.png?v=${Date.now()}`;
+            imgLateral.src = `sacola_${sentido}_lateral.png?v=${Date.now()}`;
+            imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
-        // SISTEMA DE UPLOAD BLINDADO CONTRA CONFLITOS DE ARQUIVO
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                elFileText.textContent = file.name;
-
-                const blobURL = URL.createObjectURL(file);
+                elFileText.textContent = e.target.files[0].name;
+                const blobURL = URL.createObjectURL(e.target.files[0]);
                 
                 logoCarregada = false;
                 imgLogo = new Image(); 
@@ -585,12 +588,10 @@
         elLogoGiro.addEventListener('input', processarETingirMockup);
         elModelo.addEventListener('change', carregarArquivosDoServidor);
 
-        // FUNÇÃO DE DOWNLOAD DO LAYOUT EM ALTA RESOLUÇÃO NATIVA
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const link = document.createElement('a');
-            const sentido = elModelo.value;
-            link.download = `mockup-layout-${sentido}.png`;
+            link.download = `mockup-layout-${elModelo.value}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
         });
@@ -602,4 +603,3 @@
     </script>
 </body>
 </html>
-        
