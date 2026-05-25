@@ -243,6 +243,8 @@
         </div>
     </div>
     <script>
+       <!-- LOGICA JAVASCRIPT CORRIGIDA -->
+    <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -261,31 +263,44 @@
         let imgLogoClient = new Image();
         let logoCarregada = false;
 
-        // Desenha o mockup respeitando a ordem matemática de camadas
+        // Função para pintar as máscaras usando canvas auxiliares isolados (Evita conflito de cor)
+        function criarCamadaColorida(imgMascara, corHex) {
+            const buffer = document.createElement('canvas');
+            buffer.width = canvas.width;
+            buffer.height = canvas.height;
+            const bCtx = buffer.getContext('2d');
+
+            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
+                // 1. Desenha a silhueta da máscara no rascunho
+                bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
+                // 2. Ativa o recorte geométrico estrito
+                bCtx.globalCompositeOperation = 'source-in';
+                // 3. Preenche com a cor pura escolhida no painel
+                bCtx.fillStyle = corHex;
+                bCtx.fillRect(0, 0, buffer.width, buffer.height);
+            }
+            return buffer;
+        }
+
+        // Renderizador principal unificado
         function renderizarMockup() {
+            // Limpa completamente o quadro visível para evitar fantasmas de cor
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'source-over';
 
-            // Camada 1: Pintar a Cor do Papel usando a Máscara da Sacola
-            if (imgMaskSacola.complete && imgMaskSacola.naturalWidth !== 0) {
-                ctx.save();
-                ctx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
-                ctx.globalCompositeOperation = 'source-in';
-                ctx.fillStyle = elCorPapel.value;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.restore();
+            // Passo 1: Desenha a cor do papel recortada da máscara isolada
+            if (imgMaskSacola.complete) {
+                const camadaPapel = criarCamadaColorida(imgMaskSacola, elCorPapel.value);
+                ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // Camada 2: Pintar a Cor do Cordão usando a Máscara do Cordão
-            if (imgMaskCordao.complete && imgMaskCordao.naturalWidth !== 0) {
-                ctx.save();
-                ctx.drawImage(imgMaskCordao, 0, 0, canvas.width, canvas.height);
-                ctx.globalCompositeOperation = 'source-in';
-                ctx.fillStyle = elCorCordao.value;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.restore();
+            // Passo 2: Desenha a cor do cordão recortada da máscara isolada por cima
+            if (imgMaskCordao.complete) {
+                const camadaCordao = criarCamadaColorida(imgMaskCordao, elCorCordao.value);
+                ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // Camada 3: Multiplicar a Foto de Base (Sombras e Dobras) por cima de tudo
+            // Passo 3: Aplica a foto real de base (Sombras e Texturas) multiplicando os tons
             if (imgBase.complete && imgBase.naturalWidth !== 0) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'multiply';
@@ -293,23 +308,22 @@
                 ctx.restore();
             }
 
-            // Camada 4: Desenhar a Logomarca Centralizada com Ajuste de Tamanho
+            // Passo 4: Insere a logomarca do cliente centralizada com controle de zoom
             if (logoCarregada && imgLogoClient.complete) {
                 ctx.save();
                 
-                // Centralização padrão base (Eixo X: 50%, Eixo Y: 52%)
+                // Centralização base (Eixo X: 50%, Eixo Y: 52%)
                 ctx.translate(canvas.width * 0.50, canvas.height * 0.52);
                 
-                // Calcula o tamanho com base na barra de rolagem (Range)
                 let percentualZoom = elLogoZoom.value / 100;
                 let larguraLogo = canvas.width * percentualZoom;
                 let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
                 
-                // Desenha a partir do centro do logotipo
                 ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
                 ctx.restore();
             }
         }
+
         // Alterna os arquivos com base na variação escolhida
         function alternarModelo() {
             const modelo = elModelo.value;
