@@ -167,13 +167,12 @@
             z-index: 1;
         }
 
-        /* Elemento de Logotipo HTML Puro (Blindado contra erros de segurança) */
         .mockup-logo-overlay {
             position: absolute;
             z-index: 2;
             pointer-events: none;
             display: none;
-            mix-blend-mode: multiply; /* Mescla fundos brancos da logo de forma perfeita */
+            mix-blend-mode: multiply; 
             filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.12));
         }
 
@@ -190,23 +189,23 @@
             <h2>Mockup Corrigido 3D</h2>
             
             <form id="mockupForm">
-                <!-- 1. Upload no topo -->
-                <div class="form-group">
-                    <label>Logotipo do Cliente (PNG Transparente) *</label>
-                    <div class="file-input-wrapper">
-                        <button type="button" class="btn-file">Escolher ficheiro</button>
-                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
-                        <input type="file" id="logo" accept="image/png" required>
-                    </div>
-                </div>
-
-                <!-- 2. Variação -->
+                <!-- 1. Variação (SUBIU PARA PRIMEIRO LUGAR) -->
                 <div class="form-group">
                     <label for="modelo">Variação *</label>
                     <select id="modelo" required>
                         <option value="vertical">Vertical</option>
                         <option value="horizontal">Horizontal</option>
                     </select>
+                </div>
+
+                <!-- 2. Upload do Logotipo -->
+                <div class="form-group">
+                    <label>Logotipo do Cliente (PNG Transparente) *</label>
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn-file">Escolher ficheiro</button>
+                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                        <input type="file" id="logo" accept="image/png">
+                    </div>
                 </div>
 
                 <!-- 3. Cor do Papel -->
@@ -250,173 +249,7 @@
         <div class="preview-container">
             <div class="preview-box">
                 <canvas id="mockupCanvas" width="1000" height="1000"></canvas>
-                <!-- Camada real onde a logo vai aparecer sem erros -->
                 <img id="htmlLogoOverlay" class="mockup-logo-overlay" src="" alt="Logo">
             </div>
         </div>
     </div>
-    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
-    <script>
-        const canvas = document.getElementById('mockupCanvas');
-        const ctx = canvas.getContext('2d');
-
-        const elModelo = document.getElementById('modelo');
-        const elCorPapel = document.getElementById('cor-papel');
-        const elCorCordao = document.getElementById('cordao');
-        const elInputLogo = document.getElementById('logo');
-        const elFileText = document.getElementById('file-text');
-        const elForm = document.getElementById('mockupForm');
-        const htmlLogoOverlay = document.getElementById('htmlLogoOverlay');
-
-        let imgBase = new Image();
-        let imgMaskSacola = new Image();
-        let imgMaskCordao = new Image();
-        let logoCarregada = false;
-
-        // Desenha o fundo inicial limpo
-        ctx.fillStyle = "#f5f5f7";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        function criarCamadaColorida(imgMascara, corHex) {
-            const buffer = document.createElement('canvas');
-            buffer.width = canvas.width;
-            buffer.height = canvas.height;
-            const bCtx = buffer.getContext('2d');
-
-            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
-                bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
-                bCtx.globalCompositeOperation = 'source-in';
-                bCtx.fillStyle = corHex;
-                bCtx.fillRect(0, 0, buffer.width, buffer.height);
-            }
-            return buffer;
-        }
-
-        function processarEMostrarMockup() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "#f5f5f7";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Renderização Realista do Corpo da Sacola (Preserva os brilhos acetinados da foto)
-            if (imgMaskSacola.complete && imgBase.complete) {
-                const bufferPapel = document.createElement('canvas');
-                bufferPapel.width = canvas.width;
-                bufferPapel.height = canvas.height;
-                const pCtx = bufferPapel.getContext('2d');
-
-                pCtx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
-                pCtx.globalCompositeOperation = 'source-in';
-                pCtx.fillStyle = elCorPapel.value;
-                pCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-                pCtx.globalCompositeOperation = 'hard-light';
-                pCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-
-                ctx.drawImage(bufferPapel, 0, 0);
-            }
-
-            // 2. Renderização do Cordão
-            if (imgMaskCordao.complete) {
-                const bufferCordao = document.createElement('canvas');
-                bufferCordao.width = canvas.width;
-                bufferCordao.height = canvas.height;
-                const cCtx = bufferCordao.getContext('2d');
-
-                cCtx.drawImage(imgMaskCordao, 0, 0, canvas.width, canvas.height);
-                cCtx.globalCompositeOperation = 'source-in';
-                cCtx.fillStyle = elCorCordao.value;
-                cCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-                cCtx.globalCompositeOperation = 'multiply';
-                cCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-
-                ctx.drawImage(bufferCordao, 0, 0);
-            }
-
-            // 3. Aplicação final das sombras do cenário por cima
-            ctx.save();
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-            ctx.restore();
-
-            // 4. Reposicionamento da Logo HTML baseada na Perspectiva e Medidas da Foto Real enviada
-            if (logoCarregada) {
-                htmlLogoOverlay.style.display = 'block';
-                
-                if (elModelo.value === 'horizontal') {
-                    // Centralização e perspectiva idêntica à sacola "Sarah Flor" da sua foto
-                    htmlLogoOverlay.style.width = '52%';
-                    htmlLogoOverlay.style.left = '48%';
-                    htmlLogoOverlay.style.top = '54%';
-                    htmlLogoOverlay.style.transform = 'translate(-50%, -50%) rotate(-1.8deg) skewY(-1.8deg)';
-                } else {
-                    // Centralização padrão para o modelo Vertical
-                    htmlLogoOverlay.style.width = '38%';
-                    htmlLogoOverlay.style.left = '50%';
-                    htmlLogoOverlay.style.top = '55%';
-                    htmlLogoOverlay.style.transform = 'translate(-50%, -50%) rotate(0deg) skewY(0deg)';
-                }
-            }
-        }
-        // Captura o upload do cliente e injeta na camada segura de imagem
-        elInputLogo.addEventListener('change', function() {
-            if (this.files && this.files) {
-                elFileText.textContent = this.files.name;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    htmlLogoOverlay.src = e.target.result;
-                    logoCarregada = true;
-                };
-                reader.readAsDataURL(this.files);
-            }
-        });
-
-        elForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            if (!logoCarregada) {
-                alert("Por favor, selecione o logotipo antes de gerar o mockup.");
-                return;
-            }
-
-            const submitBtn = elForm.querySelector('.btn-submit');
-            submitBtn.textContent = "Processando...";
-            submitBtn.disabled = true;
-
-            const modelo = elModelo.value;
-
-            // Mapeado com os nomes exatos do seu painel FTP
-            if (modelo === 'vertical') {
-                imgBase.src = 'sacola_vertical_sombras.png';
-                imgMaskSacola.src = 'rímel vertical.png'; 
-                imgMaskCordao.src = 'cordao_vertical_mascara.png';
-            } else {
-                imgBase.src = 'horizontal-sacola-branca.png';
-                imgMaskSacola.src = 'horizontal-sacola-mascara.png';
-                imgMaskCordao.src = 'horizontal-cordao-mascara.png';
-            }
-
-            let imagensCarregadas = 0;
-            function conferirCarregamento() {
-                imagensCarregadas++;
-                if (imagensCarregadas === 3) {
-                    processarEMostrarMockup();
-                    submitBtn.textContent = "Gerar Imagem";
-                    submitBtn.disabled = false;
-                }
-            }
-
-            imgBase.onload = conferirCarregamento;
-            imgMaskSacola.onload = conferirCarregamento;
-            imgMaskCordao.onload = conferirCarregamento;
-
-            if (imgBase.complete && imgMaskSacola.complete && imgMaskCordao.complete) {
-                processarEMostrarMockup();
-                submitBtn.textContent = "Gerar Imagem";
-                submitBtn.disabled = false;
-            }
-        });
-    </script>
-</body>
-</html>
