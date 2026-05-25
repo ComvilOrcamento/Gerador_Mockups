@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup - Estúdio Premium</title>
+    <title>Gerador de Mockup - Estúdio Fotográfico Realista</title>
     <style>
         * {
             margin: 0;
@@ -238,7 +238,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: radial-gradient(circle at center, #ffffff 0%, #f1f3f6 100%);
+            background: #e8e8e8; /* Cor cinza claro estática no contêiner da página */
             border-radius: 16px;
             padding: 20px;
             position: relative;
@@ -418,21 +418,38 @@
             return buffer;
         }
 
+        // MOTOR DE RENDERIZAÇÃO ATUALIZADO: FUNDO CINZA CLARO AUTOMÁTICO + SOMBRA REALISTA NA SACOLA
         function processarETingirMockup() {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
             canvas.width = imgBase.naturalWidth;
             canvas.height = imgBase.naturalHeight;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Frente
+            // MELHORIA 1: Pinta o fundo da imagem automaticamente com o cinza claro desejado (Mantém fixo ao descarregar)
+            ctx.fillStyle = "#e8e8e8";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // MELHORIA 2: Injeta a sombra projetada de profundidade na sacola física (Aplica o desfoque estúdio por baixo)
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 0, 0, 0.16)"; // Sombra suave e realista
+            ctx.shadowBlur = canvas.width * 0.04;    // Desfoque proporcional ao tamanho da imagem
+            ctx.shadowOffsetX = canvas.width * 0.015; // Deslocamento lateral
+            ctx.shadowOffsetY = canvas.height * 0.025; // Deslocamento para baixo
+            
+            // Desenha uma silhueta de sombra baseada no formato da imagem antes das cores
+            ctx.drawImage(imgBase, 0, 0);
+            ctx.restore();
+
+            // 1. Frente (sacola_X_frente.png)
             if (imgFrente.complete && imgFrente.naturalWidth > 0) {
                 const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
                 const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
                 ctx.drawImage(camadaFrente, 0, 0);
             }
 
-            // 2. Lateral
+            // 2. Lateral (sacola_X_lateral.png)
             if (imgLateral.complete && imgLateral.naturalWidth > 0) {
                 const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
                 const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
@@ -463,13 +480,13 @@
                 ctx.restore();
             }
 
-            // 4. Cordões
+            // 4. Cordões (sacola_X_cordao.png)
             if (imgCordao.complete && imgCordao.naturalWidth > 0) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 5. Sombras de Base
+            // 5. Sombras de Relevo por Cima de tudo (sacola_X_base.png)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0);
@@ -515,7 +532,7 @@
         }
 
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
+            if (e.target.files && e.target.files) {
                 elFileText.textContent = e.target.files[0].name;
                 const blobURL = URL.createObjectURL(e.target.files[0]);
                 
@@ -591,7 +608,8 @@
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const link = document.createElement('a');
-            link.download = `mockup-layout-${elModelo.value}.png`;
+            const sentido = elModelo.value;
+            link.download = `mockup-layout-${sentido}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
         });
