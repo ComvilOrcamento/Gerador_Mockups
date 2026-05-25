@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup Realista Fotográfico</title>
+    <title>Variações de Sacola - Padrão Realista</title>
     <style>
         * {
             margin: 0;
@@ -29,7 +29,7 @@
             align-items: stretch;
         }
 
-        /* Painel Lateral de Controle */
+        /* Painel Lateral */
         .form-container {
             background-color: #ffffff;
             padding: 30px 25px;
@@ -37,6 +37,9 @@
             width: 35%;
             min-width: 320px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         h2 {
@@ -62,7 +65,7 @@
 
         select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 12px;
             border: 1px solid #cccccc;
             border-radius: 6px;
             background-color: #ffffff;
@@ -76,62 +79,11 @@
             background-size: 14px;
         }
 
-        .file-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            border: 1px solid #cccccc;
-            border-radius: 6px;
-            padding: 6px;
-            background-color: #ffffff;
+        select:focus {
+            border-color: #003366;
         }
 
-        .file-input-wrapper input[type="file"] {
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .btn-file {
-            background-color: #efefef;
-            border: 1px solid #dddddd;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            pointer-events: none;
-        }
-
-        .file-text {
-            font-size: 13px;
-            color: #666666;
-            margin-left: 10px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .btn-submit {
-            width: 100%;
-            background-color: #003366;
-            color: #ffffff;
-            border: none;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn-submit:hover {
-            background-color: #002244;
-        }
-
-        /* Área de Visualização com Suporte a Logo Isolada */
+        /* Quadro de Visualização com Camadas Sobrepostas */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -157,23 +109,26 @@
             overflow: hidden;
         }
 
-        canvas {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        /* Camadas empilhadas para fundir base e sombra de forma limpa */
+        .mockup-layer {
             position: absolute;
-            top: 0;
-            left: 0;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: block;
+        }
+
+        .layer-base {
             z-index: 1;
         }
 
-        .mockup-logo-overlay {
-            position: absolute;
+        .layer-sombra {
             z-index: 2;
+            mix-blend-mode: multiply; /* Faz o fundo branco da sombra sumir, mantendo o relevo realista */
             pointer-events: none;
-            display: none;
-            mix-blend-mode: multiply; 
-            filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.12));
         }
 
         @media (max-width: 768px) {
@@ -186,233 +141,47 @@
 
     <div class="container">
         <div class="form-container">
-            <h2>Mockup Corrigido 3D</h2>
+            <h2>Variações de Sacola</h2>
             
-            <form id="mockupForm">
-                <!-- 1. Variação (SUBIU PARA PRIMEIRO LUGAR) -->
-                <div class="form-group">
-                    <label for="modelo">Variação *</label>
-                    <select id="modelo" required>
-                        <option value="vertical">Vertical</option>
-                        <option value="horizontal">Horizontal</option>
-                    </select>
-                </div>
-
-                <!-- 2. Upload do Logotipo -->
-                <div class="form-group">
-                    <label>Logotipo do Cliente (PNG Transparente) *</label>
-                    <div class="file-input-wrapper">
-                        <button type="button" class="btn-file">Escolher ficheiro</button>
-                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
-                        <input type="file" id="logo" accept="image/png">
-                    </div>
-                </div>
-
-                <!-- 3. Cor do Papel -->
-                <div class="form-group">
-                    <label for="cor-papel">Cor de Papel *</label>
-                    <select id="cor-papel" required>
-                        <option value="#ffffff">Branco</option>
-                        <option value="#1a1a1a">Preto</option>
-                        <option value="#e60000">Vermelho</option>
-                        <option value="#ffcc00">Amarelo</option>
-                        <option value="#0055ff">Azul</option>
-                        <option value="#009933">Verde</option>
-                        <option value="#6600cc">Roxo</option>
-                        <option value="#ff66b2">Rosa</option>
-                        <option value="#ff6600">Laranja</option>
-                        <option value="#c2a67a">Kraft</option>
-                    </select>
-                </div>
-
-                <!-- 4. Cor do Cordão -->
-                <div class="form-group">
-                    <label for="cordao">Cor de Cordão *</label>
-                    <select id="cordao" required>
-                        <option value="#ffffff">Branco</option>
-                        <option value="#1a1a1a">Preto</option>
-                        <option value="#e60000">Vermelho</option>
-                        <option value="#ffcc00">Amarelo</option>
-                        <option value="#0055ff">Azul</option>
-                        <option value="#009933">Verde</option>
-                        <option value="#6600cc">Roxo</option>
-                        <option value="#ff66b2">Rosa</option>
-                        <option value="#ff6600">Laranja</option>
-                        <option value="#daa520">Dourado</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn-submit">Gerar Imagem</button>
-            </form>
+            <div class="form-group">
+                <label for="modelo">Selecione a Variação *</label>
+                <select id="modelo">
+                    <option value="vertical">Vertical</option>
+                    <option value="horizontal">Horizontal</option>
+                </select>
+            </div>
         </div>
 
         <div class="preview-container">
             <div class="preview-box">
-                <canvas id="mockupCanvas" width="1000" height="1000"></canvas>
-                <img id="htmlLogoOverlay" class="mockup-logo-overlay" src="" alt="Logo">
+                <!-- Duas camadas nativas fixas na tela -->
+                <img id="sacolaBase" class="mockup-layer layer-base" src="" alt="Sacola Base">
+                <img id="sacolaSombra" class="mockup-layer layer-sombra" src="" alt="Sacola Sombra">
             </div>
         </div>
     </div>
-    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
+    <!-- LOGICA JAVASCRIPT -->
     <script>
-        const canvas = document.getElementById('mockupCanvas');
-        const ctx = canvas.getContext('2d');
-
         const elModelo = document.getElementById('modelo');
-        const elCorPapel = document.getElementById('cor-papel');
-        const elCorCordao = document.getElementById('cordao');
-        const elInputLogo = document.getElementById('logo');
-        const elFileText = document.getElementById('file-text');
-        const elForm = document.getElementById('mockupForm');
-        const htmlLogoOverlay = document.getElementById('htmlLogoOverlay');
+        const elSacolaBase = document.getElementById('sacolaBase');
+        const elSacolaSombra = document.getElementById('sacolaSombra');
 
-        let imgBase = new Image();
-        let imgMaskSacola = new Image();
-        let imgMaskCordao = new Image();
-        let logoCarregada = false;
+        // Carrega e fixa as duas imagens correspondentes respeitando o padrão estrito de nomes
+        function alternarSentidoMockup() {
+            const sentido = elModelo.value; // 'vertical' ou 'horizontal'
 
-        function criarCamadaColorida(imgMascara, corHex) {
-            const buffer = document.createElement('canvas');
-            buffer.width = canvas.width;
-            buffer.height = canvas.height;
-            const bCtx = buffer.getContext('2d');
+            // Altera as imagens da tela baseando-se rigorosamente na opção do seletor
+            elSacolaBase.src = `sacola_${sentido}_base.png`;
+            elSacolaBase.alt = `Sacola Base ${sentido}`;
 
-            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
-                bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
-                bCtx.globalCompositeOperation = 'source-in';
-                bCtx.fillStyle = corHex;
-                bCtx.fillRect(0, 0, buffer.width, buffer.height);
-            }
-            return buffer;
+            elSacolaSombra.src = `sacola_${sentido}_sombra.png`;
+            elSacolaSombra.alt = `Sacola Sombra ${sentido}`;
         }
+        // Troca os arquivos de base e sombra assim que o usuário mexe no campo
+        elModelo.addEventListener('change', alternarSentidoMockup);
 
-        // Renderiza tudo na tela instantaneamente
-        function processarEMostrarMockup() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "#f5f5f7";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Renderiza o papel usando a máscara e a foto base (Efeito Hard-Light Realista)
-            if (imgMaskSacola.complete && imgBase.complete) {
-                const bufferPapel = document.createElement('canvas');
-                bufferPapel.width = canvas.width;
-                bufferPapel.height = canvas.height;
-                const pCtx = bufferPapel.getContext('2d');
-
-                pCtx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
-                pCtx.globalCompositeOperation = 'source-in';
-                pCtx.fillStyle = elCorPapel.value;
-                pCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-                pCtx.globalCompositeOperation = 'hard-light';
-                pCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-
-                ctx.drawImage(bufferPapel, 0, 0);
-            }
-
-            // 2. Renderiza o cordão
-            if (imgMaskCordao.complete) {
-                const bufferCordao = document.createElement('canvas');
-                bufferCordao.width = canvas.width;
-                bufferCordao.height = canvas.height;
-                const cCtx = bufferCordao.getContext('2d');
-
-                cCtx.drawImage(imgMaskCordao, 0, 0, canvas.width, canvas.height);
-                cCtx.globalCompositeOperation = 'source-in';
-                cCtx.fillStyle = elCorCordao.value;
-                cCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-                cCtx.globalCompositeOperation = 'multiply';
-                cCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-
-                ctx.drawImage(bufferCordao, 0, 0);
-            }
-
-            // 3. Aplica as sombras reais do cenário
-            ctx.save();
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-            ctx.restore();
-
-            // 4. Reposiciona a logo se ela estiver carregada
-            if (logoCarregada) {
-                htmlLogoOverlay.style.display = 'block';
-                if (elModelo.value === 'horizontal') {
-                    htmlLogoOverlay.style.width = '52%';
-                    htmlLogoOverlay.style.left = '48%';
-                    htmlLogoOverlay.style.top = '54%';
-                    htmlLogoOverlay.style.transform = 'translate(-50%, -50%) rotate(-1.8deg) skewY(-1.8deg)';
-                } else {
-                    htmlLogoOverlay.style.width = '38%';
-                    htmlLogoOverlay.style.left = '50%';
-                    htmlLogoOverlay.style.top = '55%';
-                    htmlLogoOverlay.style.transform = 'translate(-50%, -50%) rotate(0deg) skewY(0deg)';
-                }
-            } else {
-                htmlLogoOverlay.style.display = 'none';
-            }
-        }
-        // Troca os arquivos de imagem imediatamente ao mudar no campo Variação e deixa fixo
-        // Troca os arquivos de imagem imediatamente ao mudar no campo Variação e deixa fixo
-        function carregarArquivosEAtualizar() {
-            const modelo = elModelo.value;
-            let carregadas = 0;
-
-            function verificarPronto() {
-                carregadas++;
-                if (carregadas === 3) {
-                    processarEMostrarMockup();
-                }
-            }
-
-            // ATENÇÃO: Liberação de segurança CORS para o Canvas aceitar desenhar os arquivos
-            imgBase.crossOrigin = "anonymous";
-            imgMaskSacola.crossOrigin = "anonymous";
-            imgMaskCordao.crossOrigin = "anonymous";
-
-            imgBase.onload = verificarPronto;
-            imgMaskSacola.onload = verificarPronto;
-            imgMaskCordao.onload = verificarPronto;
-
-            if (modelo === 'vertical') {
-                imgBase.src = 'sacola_vertical_sombras.png';
-                imgMaskSacola.src = 'rímel vertical.png'; 
-                imgMaskCordao.src = 'cordao_vertical_mascara.png';
-            } else {
-                imgBase.src = 'horizontal-sacola-branca.png';
-                imgMaskSacola.src = 'horizontal-sacola-mascara.png';
-                imgMaskCordao.src = 'horizontal-cordao-mascara.png';
-            }
-        }
-
-        // Escuta os uploads de logotipo do usuário
-        elInputLogo.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                elFileText.textContent = this.files[0].name;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    htmlLogoOverlay.src = e.target.result;
-                    logoCarregada = true;
-                    processarEMostrarMockup(); // Atualiza a logo em tempo real na tela
-                };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-
-        // Eventos instantâneos: muda a imagem na tela na hora que seleciona
-        elModelo.addEventListener('change', carregarArquivosEAtualizar);
-        elCorPapel.addEventListener('change', processarEMostrarMockup);
-        elCorCordao.addEventListener('change', processarEMostrarMockup);
-
-        // O botão agora serve apenas para forçar uma nova renderização manual se necessário
-        elForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            processarEMostrarMockup();
-        });
-
-        // Dispara o carregamento do primeiro modelo fixo (Vertical) assim que a página abre
-        window.addEventListener('DOMContentLoaded', carregarArquivosEAtualizar);
+        // Inicializa o primeiro padrão fixo (Vertical) ao abrir a página
+        window.addEventListener('DOMContentLoaded', alternarSentidoMockup);
     </script>
 </body>
 </html>
