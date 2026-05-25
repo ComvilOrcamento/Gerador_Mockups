@@ -60,7 +60,7 @@
             margin-bottom: 8px;
         }
 
-        select, input[type="range"] {
+        select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #cccccc;
@@ -69,14 +69,18 @@
             color: #333333;
             font-size: 14px;
             outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://w3.org' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px;
         }
 
-        input[type="range"] {
-            padding: 5px 0;
-            accent-color: #003366;
+        select:focus {
+            border-color: #003366;
         }
 
-        /* Botão de Upload na parte de baixo */
+        /* Botão de Upload Personalizado (Agora no Topo) */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -85,7 +89,6 @@
             border-radius: 6px;
             padding: 6px;
             background-color: #ffffff;
-            margin-bottom: 15px;
         }
 
         .file-input-wrapper input[type="file"] {
@@ -177,7 +180,18 @@
             <h2>Mockup Corrigido 3D</h2>
             
             <form id="mockupForm">
-                <!-- 1. Variação -->
+                
+                <!-- 1. Upload de Arquivo (Subiu para a primeira opção) -->
+                <div class="form-group">
+                    <label>Logotipo do Cliente (PNG Transparente) *</label>
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn-file">Escolher ficheiro</button>
+                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                        <input type="file" id="logo" accept="image/png" required>
+                    </div>
+                </div>
+
+                <!-- 2. Variação -->
                 <div class="form-group">
                     <label for="modelo">Variação *</label>
                     <select id="modelo" required>
@@ -186,7 +200,7 @@
                     </select>
                 </div>
 
-                <!-- 2. Cor da Sacola/Papel -->
+                <!-- 3. Cor da Sacola/Papel -->
                 <div class="form-group">
                     <label for="cor-papel">Cor de Papel *</label>
                     <select id="cor-papel" required>
@@ -203,7 +217,7 @@
                     </select>
                 </div>
 
-                <!-- 3. Cor do Cordão -->
+                <!-- 4. Cor do Cordão -->
                 <div class="form-group">
                     <label for="cordao">Cor de Cordão *</label>
                     <select id="cordao" required>
@@ -220,23 +234,6 @@
                     </select>
                 </div>
 
-                <!-- 4. Ajuste de Tamanho da Logo -->
-                <div class="form-group">
-                    <label for="logo-zoom">Tamanho do Logotipo (Zoom)</label>
-                    <input type="range" id="logo-zoom" min="10" max="70" value="35">
-                </div>
-
-                <!-- 5. Upload de Arquivo (na parte de baixo) -->
-                <div class="form-group">
-                    <label>Logotipo do Cliente (PNG Transparente) *</label>
-                    <div class="file-input-wrapper">
-                        <button type="button" class="btn-file">Escolher ficheiro</button>
-                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
-                        <input type="file" id="logo" accept="image/png" required>
-                    </div>
-                </div>
-
-                <!-- Botão alterado para apenas gerar a imagem na tela -->
                 <button type="submit" class="btn-submit">Gerar Imagem</button>
             </form>
         </div>
@@ -248,7 +245,7 @@
             </div>
         </div>
     </div>
-    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
+    <!-- LOGICA JAVASCRIPT -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -258,7 +255,6 @@
         const elCorCordao = document.getElementById('cordao');
         const elInputLogo = document.getElementById('logo');
         const elFileText = document.getElementById('file-text');
-        const elLogoZoom = document.getElementById('logo-zoom');
         const elForm = document.getElementById('mockupForm');
 
         // Objetos de imagem nativos
@@ -268,11 +264,11 @@
         let imgLogoClient = new Image();
         let logoCarregada = false;
 
-        // Limpa a tela inicial para o usuário saber que precisa clicar em gerar
+        // Fundo neutro padrão inicial do canvas
         ctx.fillStyle = "#f0f0f0";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Função auxiliar que isola a pintura da cor dentro do formato da máscara
+        // Função auxiliar que isola a cor dentro da silhueta da máscara
         function criarCamadaColorida(imgMascara, corHex) {
             const buffer = document.createElement('canvas');
             buffer.width = canvas.width;
@@ -288,7 +284,7 @@
             return buffer;
         }
 
-        // Função de montagem que mistura as cores, sombras e aplica a logo
+        // Função de montagem que mistura as cores, sombras e a logo com tamanho fixo automático
         function processarEMostrarMockup() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.globalCompositeOperation = 'source-over';
@@ -299,13 +295,13 @@
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // 2. Aplica a cor do Cordão através da máscara de cordão por cima
+            // 2. Aplica a cor do Cordão através da máscara de cordão
             if (imgMaskCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgMaskCordao, elCorCordao.value);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 3. Aplica a Foto Real com Sombras de base multiplicando as cores
+            // 3. Aplica a Foto de Base com as Sombras Reais multiplicando por cima
             if (imgBase.complete) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'multiply';
@@ -313,24 +309,25 @@
                 ctx.restore();
             }
 
-            // 4. Aplica a Logomarca Centralizada com Controle de Zoom
+            // 4. Aplica a Logomarca Centralizada com Tamanho Padrão Automático Fixo
             if (logoCarregada && imgLogoClient.complete) {
                 ctx.save();
                 
                 if (elModelo.value === 'vertical') {
+                    // Centralização padrão vertical
                     ctx.translate(canvas.width * 0.50, canvas.height * 0.52);
-                    let percentualZoom = elLogoZoom.value / 100;
-                    let larguraLogo = canvas.width * percentualZoom;
+                    
+                    // Tamanho automático fixado de forma proporcional (35% da largura da sacola)
+                    let larguraLogo = canvas.width * 0.35;
                     let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
                     ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
                 } else {
-                    // Configuração tridimensional inclinada para a sacola horizontal
+                    // Centralização e inclinação em perspectiva para a horizontal
                     ctx.translate(canvas.width * 0.54, canvas.height * 0.50);
                     ctx.rotate(-1.5 * Math.PI / 180);
                     ctx.transform(1, -0.026, 0, 1, 0, 0);
                     
-                    let percentualZoom = elLogoZoom.value / 100;
-                    let larguraLogo = canvas.width * percentualZoom;
+                    let larguraLogo = canvas.width * 0.38;
                     let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
                     ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
                 }
@@ -350,7 +347,7 @@
             }
         });
 
-        // O BOTÃO GERAR: Só carrega as imagens do servidor e renderiza ao ser clicado
+        // O BOTÃO GERAR: Só carrega os arquivos fornecidos e processa tudo ao ser clicado
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -360,12 +357,12 @@
             }
 
             const submitBtn = elForm.querySelector('.btn-submit');
-            submitBtn.textContent = "Gerando...";
+            submitBtn.textContent = "Gerando Mockup...";
             submitBtn.disabled = true;
 
             const modelo = elModelo.value;
 
-            // Define quais arquivos carregar de acordo com a variação
+            // Mapeamento dos arquivos na raiz conforme suas especificações oficiais
             if (modelo === 'vertical') {
                 imgBase.src = 'sacola_vertical_base.png';
                 imgMaskSacola.src = 'sacola_vertical_mascara.png';
@@ -376,7 +373,7 @@
                 imgMaskCordao.src = 'horizontal-cordao-mascara.png';
             }
 
-            // Aguarda o carregamento completo de todas as imagens para poder misturar na tela
+            // Validador de carregamento assíncrono das imagens
             let imagensCarregadas = 0;
             function conferirCarregamento() {
                 imagensCarregadas++;
@@ -391,18 +388,11 @@
             imgMaskSacola.onload = conferirCarregamento;
             imgMaskCordao.onload = conferirCarregamento;
             
-            // Se as imagens já tiverem no cache do servidor, força o re-processamento
+            // Caso as imagens já estejam no cache do navegador, força a renderização direta
             if (imgBase.complete && imgMaskSacola.complete && imgMaskCordao.complete) {
                 processarEMostrarMockup();
                 submitBtn.textContent = "Gerar Imagem";
                 submitBtn.disabled = false;
-            }
-        });
-
-        // Atualiza a visualização em tempo real caso o usuário mexa no Zoom após gerar
-        elLogoZoom.addEventListener('input', () => {
-            if(logoCarregada && imgBase.src) {
-                processarEMostrarMockup();
             }
         });
     </script>
