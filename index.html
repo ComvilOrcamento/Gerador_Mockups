@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Sistema Profissional</title>
+    <title>Variações de Sacola - Aplicação de Logo</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             width: 100%;
             max-width: 1100px;
             gap: 30px;
-            align-items: stretch;
+            align-items: center;
         }
 
         /* Painel Lateral */
@@ -37,9 +37,6 @@
             width: 35%;
             min-width: 320px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
         h2 {
@@ -79,7 +76,10 @@
             background-size: 14px;
         }
 
-        /* Input de Paleta Livre com o Mouse */
+        select:focus {
+            border-color: #003366;
+        }
+
         .color-picker-wrapper {
             display: flex;
             gap: 10px;
@@ -100,7 +100,6 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
-        /* Botão do Modo Kraft */
         .btn-kraft {
             flex-grow: 1;
             background-color: #c2a67a;
@@ -112,13 +111,52 @@
             border-radius: 6px;
             cursor: pointer;
             transition: background-color 0.2s;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Quadro de Visualização */
+        /* Botão Personalizado de Upload de Arquivo */
+        .file-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            padding: 6px;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .btn-file {
+            background-color: #efefef;
+            border: 1px solid #dddddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        .file-text {
+            font-size: 13px;
+            color: #666666;
+            margin-left: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Quadro de Visualização Fluido */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -128,24 +166,25 @@
             justify-content: center;
             align-items: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            min-height: 400px;
         }
 
         .preview-box {
             width: 100%;
-            max-width: 500px;
-            aspect-ratio: 1 / 1;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
             display: flex;
             justify-content: center;
             align-items: center;
             background-color: #f5f5f7;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            padding: 10px;
         }
 
         canvas {
             max-width: 100%;
-            max-height: 100%;
+            height: auto !important;
             object-fit: contain;
+            display: block;
         }
 
         @media (max-width: 768px) {
@@ -157,6 +196,7 @@
 <body>
 
     <div class="container">
+        <!-- Painel Lateral -->
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
@@ -169,7 +209,7 @@
                 </select>
             </div>
 
-            <!-- 2. Cor do Papel (Paleta Livre Mouse + Botão Kraft) -->
+            <!-- 2. Cor do Papel -->
             <div class="form-group">
                 <label>Cor de Papel *</label>
                 <div class="color-picker-wrapper">
@@ -178,13 +218,24 @@
                 </div>
             </div>
 
-            <!-- 3. Cor do Cordão (Mesma regra de paleta com mouse) -->
+            <!-- 3. Cor do Cordão -->
             <div class="form-group">
                 <label for="cor-cordao">Cor de Cordão *</label>
                 <input type="color" id="cor-cordao" value="#1a1a1a">
             </div>
+
+            <!-- 4. Upload do Logotipo (Novo Campo Adicionado) -->
+            <div class="form-group">
+                <label>Logotipo do Cliente (PNG Transparente) *</label>
+                <div class="file-input-wrapper">
+                    <button type="button" class="btn-file">Escolher ficheiro</button>
+                    <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                    <input type="file" id="logo" accept="image/png">
+                </div>
+            </div>
         </div>
 
+        <!-- Área de Exibição -->
         <div class="preview-container">
             <div class="preview-box">
                 <canvas id="mockupCanvas"></canvas>
@@ -200,14 +251,17 @@
         const elCorPapel = document.getElementById('cor-papel');
         const elCorCordao = document.getElementById('cor-cordao');
         const elBtnKraft = document.getElementById('btnKraft');
+        const elInputLogo = document.getElementById('logo');
+        const elFileText = document.getElementById('file-text');
 
         let imgSombra = new Image();
         let imgBase = new Image();
         let imgCordao = new Image();
+        let imgLogo = new Image();
         
         let modoKraftAtivo = false;
+        let logoCarregada = false;
 
-        // Função isolada de corte geométrico para criar cores intensas e opacas
         function criarCamadaColorida(imgMascara, corHex) {
             const buffer = document.createElement('canvas');
             buffer.width = canvas.width;
@@ -223,90 +277,113 @@
             return buffer;
         }
 
-        // Renderizador principal unificado que mantém o tamanho original da imagem
+        // Mistura as camadas mantendo as proporções originais e centralizando a logo
         function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
-            // PRESERVAR O TAMANHO ORIGINAL: Canvas assume exatamente a resolução em pixels dos seus arquivos
+            // Mantém rigidamente a resolução nativa em pixels da sua imagem original
             canvas.width = imgSombra.naturalWidth;
             canvas.height = imgSombra.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Fundo neutro cinza de estúdio
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. TINGIR O PAPEL (Cor Forte e Opaca)
+            // 1. TINGIR O PAPEL (Cor Forte e Sólida)
             if (imgBase.complete) {
-                // Se o modo Kraft estiver ligado, injeta o tom hexadecimal do Kraft (#c2a67a)
                 const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
                 const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // 2. TINGIR O CORDÃO (Mesma regra de sombra e opacidade forte)
+            // 2. TINGIR O CORDÃO
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, elCorCordao.value);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 3. MULTIPLICAR AS SOMBRAS GLOBAIS POR CIMA (Realismo nos vincos, dobras e alças)
+            // 3. MULTIPLICAR AS SOMBRAS GLOBAIS POR CIMA
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgSombra, 0, 0);
             ctx.restore();
+
+            // 4. APLICAR LOGOTIPO DO CLIENTE (Perfeitamente Centralizado)
+            if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
+                ctx.save();
+                
+                // Move o eixo de pintura para o centro matemático exato do Canvas da sacola
+                // (Eixo X: 50% / Eixo Y: 53% - levemente abaixo das alças para encaixe perfeito)
+                ctx.translate(canvas.width * 0.50, canvas.height * 0.53);
+                
+                // Calcula o tamanho da logo de forma proporcional (fixado em 35% da largura da sacola)
+                let larguraLogo = canvas.width * 0.35;
+                let alturaLogo = (imgLogo.height / imgLogo.width) * larguraLogo;
+                
+                // Desenha a imagem compensando metade do tamanho para que o centro da logo bata com o centro da sacola
+                ctx.drawImage(imgLogo, -larguraLogo / 2, -alturaLogo / 2, larguraLogo, alturaLogo);
+                ctx.restore();
+            }
         }
-        // Troca as imagens com base na variação e deixa fixo na tela em tempo real
+        // Puxa as imagens direto na raiz respeitando a nomenclatura padronizada
         function carregarArquivosDoServidor() {
-            const sentido = elModelo.value; // 'vertical' ou 'horizontal'
+            const sentido = elModelo.value;
             let carregadas = 0;
 
-            function conferirPronto() {
+            function verificarPronto() {
                 carregadas++;
                 if (carregadas === 3) {
                     processarETingirMockup();
                 }
             }
 
-            // Liberação de segurança de leitura de pixels do navegador
             imgSombra.crossOrigin = "anonymous";
             imgBase.crossOrigin = "anonymous";
             imgCordao.crossOrigin = "anonymous";
 
-            imgSombra.onload = conferirPronto;
-            imgBase.onload = conferirPronto;
-            imgCordao.onload = conferirPronto;
+            imgSombra.onload = verificarPronto;
+            imgBase.onload = verificarPronto;
+            imgCordao.onload = verificarPronto;
 
-            // Busca os arquivos com a nomenclatura padronizada e correta direto na raiz
             imgSombra.src = `sacola_${sentido}_sombra.png`;
             imgBase.src = `sacola_${sentido}_base.png`;
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
-        // Ativação e gerenciamento inteligente do modo Kraft
+        // Escuta o upload do logotipo do cliente e aplica na hora
+        elInputLogo.addEventListener('change', function() {
+            if (this.files && this.files) {
+                elFileText.textContent = this.files.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imgLogo.onload = function() {
+                        logoCarregada = true;
+                        processarETingirMockup(); // Renderiza com a logo imediatamente
+                    };
+                    imgLogo.src = e.target.result;
+                };
+                reader.readAsDataURL(this.files);
+            }
+        });
+
+        // Controles de clique e alteração em tempo real
         elBtnKraft.addEventListener('click', function() {
             modoKraftAtivo = !modoKraftAtivo;
-            if (modoKraftAtivo) {
-                this.classList.add('active');
-            } else {
-                this.classList.remove('active');
-            }
+            if (modoKraftAtivo) this.classList.add('active');
+            else this.classList.remove('active');
             processarETingirMockup();
         });
 
-        // Desliga o Kraft se o usuário decidir mexer na paleta de cores com o mouse
         elCorPapel.addEventListener('input', () => {
             modoKraftAtivo = false;
             elBtnKraft.classList.remove('active');
             processarETingirMockup();
         });
 
-        // Escuta os demais seletores em tempo real
         elModelo.addEventListener('change', carregarArquivosDoServidor);
         elCorCordao.addEventListener('input', processarETingirMockup);
 
-        // Inicializa o sistema fixando o modelo Vertical na abertura da página
         window.addEventListener('DOMContentLoaded', carregarArquivosDoServidor);
     </script>
 </body>
