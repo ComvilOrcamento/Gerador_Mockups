@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Padrão Realista</title>
+    <title>Variações de Sacola - Sistema de Cores</title>
     <style>
         * {
             margin: 0;
@@ -83,7 +83,7 @@
             border-color: #003366;
         }
 
-        /* Quadro de Visualização com Camadas Sobrepostas */
+        /* Quadro de Visualização */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -105,30 +105,12 @@
             justify-content: center;
             align-items: center;
             background-color: #f5f5f7;
-            position: relative;
-            overflow: hidden;
         }
 
-        /* Camadas empilhadas para fundir base e sombra de forma limpa */
-        .mockup-layer {
-            position: absolute;
+        canvas {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: block;
-        }
-
-        .layer-base {
-            z-index: 1;
-        }
-
-        .layer-sombra {
-            z-index: 2;
-            mix-blend-mode: multiply; /* Faz o fundo branco da sombra sumir, mantendo o relevo realista */
-            pointer-events: none;
         }
 
         @media (max-width: 768px) {
@@ -143,45 +125,105 @@
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
+            <!-- Campo 1: Sentido/Variação -->
             <div class="form-group">
-                <label for="modelo">Selecione a Variação *</label>
+                <label for="modelo">Variação *</label>
                 <select id="modelo">
                     <option value="vertical">Vertical</option>
                     <option value="horizontal">Horizontal</option>
+                </select>
+            </div>
+
+            <!-- Campo 2: Cor do Papel (Novo Campo Adicionado) -->
+            <div class="form-group">
+                <label for="cor-papel">Cor de Papel *</label>
+                <select id="cor-papel">
+                    <option value="#ffffff">Branco</option>
+                    <option value="#1a1a1a">Preto</option>
+                    <option value="#e60000">Vermelho</option>
+                    <option value="#ffcc00">Amarelo</option>
+                    <option value="#0055ff">Azul</option>
+                    <option value="#009933">Verde</option>
+                    <option value="#6600cc">Roxo</option>
+                    <option value="#ff66b2">Rosa</option>
+                    <option value="#ff6600">Laranja</option>
+                    <option value="#c2a67a">Kraft</option>
                 </select>
             </div>
         </div>
 
         <div class="preview-container">
             <div class="preview-box">
-                <!-- Duas camadas nativas fixas na tela -->
-                <img id="sacolaBase" class="mockup-layer layer-base" src="" alt="Sacola Base">
-                <img id="sacolaSombra" class="mockup-layer layer-sombra" src="" alt="Sacola Sombra">
+                <!-- O Canvas vai misturar a cor escolhida com a imagem de sombra de forma realista -->
+                <canvas id="mockupCanvas" width="1000" height="1000"></canvas>
             </div>
         </div>
     </div>
     <!-- LOGICA JAVASCRIPT -->
     <script>
-        const elModelo = document.getElementById('modelo');
-        const elSacolaBase = document.getElementById('sacolaBase');
-        const elSacolaSombra = document.getElementById('sacolaSombra');
+        const canvas = document.getElementById('mockupCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // Carrega e fixa as duas imagens correspondentes respeitando o padrão estrito de nomes
-        function alternarSentidoMockup() {
+        const elModelo = document.getElementById('modelo');
+        const elCorPapel = document.getElementById('cor-papel');
+
+        let imgBase = new Image();
+        let imgSombra = new Image();
+
+        // Inicializa o fundo do visualizador
+        ctx.fillStyle = "#f5f5f7";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Renderizador em tempo real: aplica a cor do painel diretamente na silhueta da sombra
+        function processarETingirSacola() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Fundo neutro idêntico ao cenário fotográfico
+            ctx.fillStyle = "#f5f5f7";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Mistura matemática: cria um rascunho com a cor e funde os canais pretos da sombra
+            if (imgSombra.complete && imgSombra.naturalWidth !== 0) {
+                const bufferTinta = document.createElement('canvas');
+                bufferTinta.width = canvas.width;
+                bufferTinta.height = canvas.height;
+                const bCtx = bufferTinta.getContext('2d');
+
+                // 1. Desenha a silhueta da sombra para capturar o formato da sacola
+                bCtx.drawImage(imgSombra, 0, 0, canvas.width, canvas.height);
+                
+                // 2. Recorta e injeta a cor exata selecionada no menu de cores fixas
+                bCtx.globalCompositeOperation = 'source-in';
+                bCtx.fillStyle = elCorPapel.value;
+                bCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 3. Aplica a textura real da sombra por cima usando a técnica 'hard-light' (preserva luzes e vincos)
+                bCtx.globalCompositeOperation = 'hard-light';
+                bCtx.drawImage(imgSombra, 0, 0, canvas.width, canvas.height);
+
+                // Desenha a sacola colorida finalizada na tela
+                ctx.drawImage(bufferTinta, 0, 0);
+            }
+        }
+        // Altera o caminho dos arquivos buscando na raiz com base no padrão estrito de nomes
+        function carregarModelos() {
             const sentido = elModelo.value; // 'vertical' ou 'horizontal'
 
-            // Altera as imagens da tela baseando-se rigorosamente na opção do seletor
-            elSacolaBase.src = `sacola_${sentido}_base.png`;
-            elSacolaBase.alt = `Sacola Base ${sentido}`;
+            // Evita bloqueios de segurança do navegador (CORS) ao processar pixels
+            imgSombra.crossOrigin = "anonymous";
 
-            elSacolaSombra.src = `sacola_${sentido}_sombra.png`;
-            elSacolaSombra.alt = `Sacola Sombra ${sentido}`;
+            imgSombra.onload = processarETingirSacola;
+
+            // Busca os arquivos com a palavra 'sombra' conforme o novo padrão estruturado
+            imgSombra.src = `sacola_${sentido}_sombra.png`;
         }
-        // Troca os arquivos de base e sombra assim que o usuário mexe no campo
-        elModelo.addEventListener('change', alternarSentidoMockup);
 
-        // Inicializa o primeiro padrão fixo (Vertical) ao abrir a página
-        window.addEventListener('DOMContentLoaded', alternarSentidoMockup);
+        // Escuta os seletores para mudar na tela imediatamente, sem precisar clicar em botão
+        elModelo.addEventListener('change', carregarModelos);
+        elCorPapel.addEventListener('change', processarETingirSacola);
+
+        // Inicializa o sistema fixando o modelo Vertical ao carregar o site
+        window.addEventListener('DOMContentLoaded', carregarModelos);
     </script>
 </body>
 </html>
