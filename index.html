@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup - Perspectiva 3D Corrigida</title>
+    <title>Gerador de Mockup - Nomenclatura Oficial</title>
     <style>
         * {
             margin: 0;
@@ -34,8 +34,8 @@
             background-color: #ffffff;
             padding: 30px 25px;
             border-radius: 8px;
-            width: 40%;
-            min-width: 340px;
+            width: 42%;
+            min-width: 350px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             max-height: 95vh;
             overflow-y: auto;
@@ -78,17 +78,33 @@
             background-size: 14px;
         }
 
-        .color-picker-wrapper {
+        /* Divisão do espaço em 3 partes iguais (33% cada) */
+        .papel-triplo-wrapper {
             display: flex;
             gap: 10px;
             align-items: center;
             width: 100%;
         }
 
+        .picker-container {
+            display: flex;
+            flex-direction: column;
+            width: 33.33%;
+        }
+
+        .picker-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: #777777;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
         input[type="color"] {
             -webkit-appearance: none;
             border: 1px solid #cccccc;
-            width: 50%;
+            width: 100%;
             height: 42px;
             border-radius: 6px;
             cursor: pointer;
@@ -100,15 +116,16 @@
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
         .btn-kraft {
-            width: 50%;
+            width: 33.33%;
             height: 42px;
             background-color: #c2a67a;
             color: #ffffff;
             border: none;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
+            align-self: flex-end;
         }
 
         .btn-kraft:hover { background-color: #b09468; }
@@ -239,10 +256,17 @@
             </div>
 
             <div class="form-group">
-                <label>Cor de Papel *</label>
-                <div class="color-picker-wrapper">
-                    <input type="color" id="cor-papel" value="#ffffff">
-                    <button type="button" id="btnKraft" class="btn-kraft">Usar Tom Kraft</button>
+                <label>Configuração da Cor de Papel *</label>
+                <div class="papel-triplo-wrapper">
+                    <div class="picker-container">
+                        <span class="picker-label">Frente</span>
+                        <input type="color" id="cor-frente" value="#ffffff">
+                    </div>
+                    <div class="picker-container">
+                        <span class="picker-label">Lateral</span>
+                        <input type="color" id="cor-lateral" value="#ffffff">
+                    </div>
+                    <button type="button" id="btnKraft" class="btn-kraft">Kraft</button>
                 </div>
             </div>
 
@@ -274,15 +298,17 @@
         const ctx = canvas.getContext('2d');
 
         const elModelo = document.getElementById('modelo');
-        const elCorPapel = document.getElementById('cor-papel');
+        const elCorFrente = document.getElementById('cor-frente');
+        const elCorLateral = document.getElementById('cor-lateral');
         const elBtnKraft = document.getElementById('btnKraft');
         const elInputLogo = document.getElementById('logo');
         const elFileText = document.getElementById('file-text');
         const elCordaoGrid = document.getElementById('cordaoGrid');
 
-        let imgSombra = new Image();
-        let imgBase = new Image();
-        let imgCordao = new Image();
+        let imgBase = new Image();       // sacola_X_base.png
+        let imgFrente = new Image();     // sacola_X_frente.png
+        let imgLateral = new Image();    // sacola_X_lateral.png
+        let imgCordao = new Image();     // sacola_X_cordao.png
         let imgLogo = new Image();
         
         let modoKraftAtivo = false;
@@ -348,38 +374,41 @@
             return buffer;
         }
 
-        // MOTOR DE MONTAGEM COM CAMADAS E PERSPECTIVA 3D CORRIGIDA
+        // NOVO MOTOR DE PROCESSAMENTO ATUALIZADO CONFORME SUA NOMENCLATURA OFICIAL
         function processarETingirMockup() {
-            if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
+            if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
-            canvas.width = imgSombra.naturalWidth;
-            canvas.height = imgSombra.naturalHeight;
+            // Mantém rigidamente o tamanho proporção original da imagem de fábrica
+            canvas.width = imgBase.naturalWidth;
+            canvas.height = imgBase.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // CAMADA 1: Tingimento do Papel
-            if (imgBase.complete) {
-                const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
-                const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
-                ctx.drawImage(camadaPapel, 0, 0);
+            // CAMADA 1A: Pintura Sólida da Frente (sacola_X_frente.png)
+            if (imgFrente.complete) {
+                const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
+                const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
+                ctx.drawImage(camadaFrente, 0, 0);
             }
 
-            // CAMADA 2: LOGOTIPO DO CLIENTE (Com profundidade corrigida da esquerda para a direita)
+            // CAMADA 1B: Pintura Sólida da Lateral (sacola_X_lateral.png)
+            if (imgLateral.complete) {
+                const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
+                const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
+                ctx.drawImage(camadaLateral, 0, 0);
+            }
+
+            // CAMADA 2: LOGOTIPO DO CLIENTE (Ocupa 35% de espaço com Profundidade 3D da Esquerda para Direita)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
-                
-                // Move para a posição atual que o usuário arrastou
                 ctx.translate(logoX, logoY);
                 
                 logoAtualWidth = canvas.width * 0.35;
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
-                // CORREÇÃO DA PROFUNDIDADE:
-                // O valor positivo nos fatores skewY (0.035 e 0.015) simula perfeitamente a projeção tridimensional.
-                // O lado esquerdo da marca se expande verticalmente (parecendo mais próximo) e vai se inclinando de forma natural em direção ao fundo (direita).
                 if (elModelo.value === 'horizontal') {
                     ctx.rotate(-1.8 * Math.PI / 180);
                     ctx.transform(1, 0.035, 0, 1, 0, 0); 
@@ -392,60 +421,62 @@
                 ctx.restore();
             }
 
-            // CAMADA 3: Tingimento das Alças
+            // CAMADA 3: Pintura Forte das Alças (sacola_X_cordao.png)
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // CAMADA 4: MULTIPLICAÇÃO DAS SOMBRAS GLOBAIS POR CIMA
+            // CAMADA 4: MULTIPLICAÇÃO DA IMAGEM BASE DE SOMBRAS POR CIMA (sacola_X_base.png)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
-            ctx.drawImage(imgSombra, 0, 0);
+            ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
         }
         function resetarPosicaoLogoPadrao() {
-            if (!imgSombra.naturalWidth) return;
+            if (!imgBase.naturalWidth) return;
             if (elModelo.value === 'horizontal') {
-                logoX = imgSombra.naturalWidth * 0.48;
-                logoY = imgSombra.naturalHeight * 0.54;
+                logoX = imgBase.naturalWidth * 0.48;
+                logoY = imgBase.naturalHeight * 0.54;
             } else {
-                logoX = imgSombra.naturalWidth * 0.50;
-                logoY = imgSombra.naturalHeight * 0.53;
+                logoX = imgBase.naturalWidth * 0.50;
+                logoY = imgBase.naturalHeight * 0.53;
             }
         }
 
         function carregarArquivosDoServidor() {
-            const sentido = elModelo.value;
+            const sentido = elModelo.value; // 'vertical' ou 'horizontal'
             let carregadas = 0;
 
             function verificarPronto() {
                 carregadas++;
-                if (carregadas === 3) {
+                if (carregadas === 4) {
                     resetarPosicaoLogoPadrao();
                     processarETingirMockup();
                 }
             }
 
-            imgSombra.crossOrigin = "anonymous";
             imgBase.crossOrigin = "anonymous";
+            imgFrente.crossOrigin = "anonymous";
+            imgLateral.crossOrigin = "anonymous";
             imgCordao.crossOrigin = "anonymous";
 
-            imgSombra.onload = verificarPronto;
             imgBase.onload = verificarPronto;
+            imgFrente.onload = verificarPronto;
+            imgLateral.onload = verificarPronto;
             imgCordao.onload = verificarPronto;
 
-            imgSombra.src = `sacola_${sentido}_sombra.png`;
+            // BUSCA AUTOMÁTICA ADAPTADA EXATAMENTE ÀS SUAS DIRETRIZES DE NOMES DE ARQUIVO
             imgBase.src = `sacola_${sentido}_base.png`;
+            imgFrente.src = `sacola_${sentido}_frente.png`;
+            imgLateral.src = `sacola_${sentido}_lateral.png`;
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files) {
-                const arquivo = e.target.files;
-                elFileText.textContent = arquivo.name;
-
-                const blobURL = URL.createObjectURL(arquivo);
+            if (e.target.files && e.target.files[0]) {
+                elFileText.textContent = e.target.files[0].name;
+                const blobURL = URL.createObjectURL(e.target.files[0]);
                 
                 imgLogo.onload = function() {
                     logoCarregada = true;
@@ -465,12 +496,9 @@
 
         canvas.addEventListener('mousedown', function(e) {
             if (!logoCarregada) return;
-            
             const mouse = obterCoordenadasMouse(e);
-            
             if (mouse.x >= logoX - logoAtualWidth/2 && mouse.x <= logoX + logoAtualWidth/2 &&
                 mouse.y >= logoY - logoAtualHeight/2 && mouse.y <= logoY + logoAtualHeight/2) {
-                
                 arrastandoLogo = true;
                 offsetMouseX = mouse.x - logoX;
                 offsetMouseY = mouse.y - logoY;
@@ -480,9 +508,7 @@
 
         canvas.addEventListener('mousemove', function(e) {
             if (!logoCarregada) return;
-            
             const mouse = obterCoordenadasMouse(e);
-
             if (arrastandoLogo) {
                 logoX = mouse.x - offsetMouseX;
                 logoY = mouse.y - offsetMouseY;
@@ -511,11 +537,8 @@
             processarETingirMockup();
         });
 
-        elCorPapel.addEventListener('input', () => {
-            modoKraftAtivo = false;
-            elBtnKraft.classList.remove('active');
-            processarETingirMockup();
-        });
+        elCorFrente.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); processarETingirMockup(); });
+        elCorLateral.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); processarETingirMockup(); });
 
         elModelo.addEventListener('change', carregarArquivosDoServidor);
 
