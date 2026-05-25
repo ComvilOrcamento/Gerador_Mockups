@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Cores Fortes P.P.</title>
+    <title>Variações de Sacola - Ordem de Camadas Realista</title>
     <style>
         * {
             margin: 0;
@@ -34,7 +34,7 @@
             background-color: #ffffff;
             padding: 30px 25px;
             border-radius: 8px;
-            width: 38%;
+            width: 40%;
             min-width: 340px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
             max-height: 90vh;
@@ -118,6 +118,39 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
+        /* Grid para os Quadradinhos de Cordão */
+        .cordao-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            background-color: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cordao-box {
+            aspect-ratio: 1 / 1;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid #cbd5e1;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .cordao-box:hover {
+            transform: scale(1.1);
+            border-color: #64748b;
+        }
+
+        .cordao-box.active {
+            border-color: #003366;
+            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.2);
+            transform: scale(1.05);
+        }
+
+        .cordao-box[style*="#ffffff"] { border-color: #e2e8f0; }
+        .cordao-box[style*="#ffffff"].active { border-color: #003366; }
+
         /* Botão de Upload */
         .file-input-wrapper {
             position: relative;
@@ -192,6 +225,7 @@
         @media (max-width: 768px) {
             .container { flex-direction: column; }
             .form-container { width: 100%; max-height: none; }
+            .cordao-grid { grid-template-columns: repeat(7, 1fr); }
         }
     </style>
 </head>
@@ -219,30 +253,10 @@
                 </div>
             </div>
 
-            <!-- 3. Cor do Cordão (Mostruário de 19 Cores Fixas Baseado na Foto) -->
+            <!-- 3. Painel de Escolha com Quadradinhos -->
             <div class="form-group">
-                <label for="cor-cordao">Cor de Cordão (Mostruário P.P.) *</label>
-                <select id="cor-cordao">
-                    <option value="#8a8a8a">1 - Cinza Prata (Especial)</option>
-                    <option value="#001fb3">2 - Azul Anil (Especial)</option>
-                    <option value="#0047ab">3 - Azul Royal</option>
-                    <option value="#7ec8e3">4 - Azul BB (Especial)</option>
-                    <option value="#2e3b2e">5 - Verde Musgo</option>
-                    <option value="#007a5e">6 - Verde Cabaré</option>
-                    <option value="#005c29">7 - Verde Bandeira</option>
-                    <option value="#6bb343">8 - Verde Pistache (Especial)</option>
-                    <option value="#99cc33">9 - Verde Limão (Especial)</option>
-                    <option value="#8ee5c4">10 - Verde BB (Especial)</option>
-                    <option value="#4b0082">11 - Roxo (Especial)</option>
-                    <option value="#7f00ff">12 - Violeta (Especial)</option>
-                    <option value="#d11d5b">13 - Pink (Especial)</option>
-                    <option value="#fca1c1">14 - Rosa BB (Especial)</option>
-                    <option value="#ff4500">15 - Laranja (Especial)</option>
-                    <option value="#fae96c">16 - Amarelo BB (Especial)</option>
-                    <option value="#5c0632">17 - Vinho</option>
-                    <option value="#cfa076">18 - Bege</option>
-                    <option value="#8c7661">19 - Rami (Especial)</option>
-                </select>
+                <label>Cor de Cordão (Mostruário P.P.) *</label>
+                <div class="cordao-grid" id="cordaoGrid"></div>
             </div>
 
             <!-- 4. Upload do Logotipo -->
@@ -269,10 +283,10 @@
 
         const elModelo = document.getElementById('modelo');
         const elCorPapel = document.getElementById('cor-papel');
-        const elCorCordao = document.getElementById('cor-cordao');
         const elBtnKraft = document.getElementById('btnKraft');
         const elInputLogo = document.getElementById('logo');
         const elFileText = document.getElementById('file-text');
+        const elCordaoGrid = document.getElementById('cordaoGrid');
 
         let imgSombra = new Image();
         let imgBase = new Image();
@@ -281,8 +295,53 @@
         
         let modoKraftAtivo = false;
         let logoCarregada = false;
+        let corCordaoSelecionada = "#ffffff"; 
 
-        // Função de corte geométrico rigoroso para criar cores 100% sólidas e intensas
+        const mostruarioCordao = [
+            { nome: "Branco", hex: "#ffffff" },
+            { nome: "Preto", hex: "#1a1a1a" },
+            { nome: "Cinza Prata", hex: "#8a8a8a" },
+            { nome: "Azul Anil", hex: "#001fb3" },
+            { nome: "Azul Royal", hex: "#0047ab" },
+            { nome: "Azul BB", hex: "#7ec8e3" },
+            { nome: "Verde Musgo", hex: "#2e3b2e" },
+            { nome: "Verde Cabaré", hex: "#007a5e" },
+            { nome: "Verde Bandeira", hex: "#005c29" },
+            { nome: "Verde Pistache", hex: "#6bb343" },
+            { nome: "Verde Limão", hex: "#99cc33" },
+            { nome: "Verde BB", hex: "#8ee5c4" },
+            { nome: "Roxo", hex: "#4b0082" },
+            { nome: "Violeta", hex: "#7f00ff" },
+            { nome: "Pink", hex: "#d11d5b" },
+            { nome: "Rosa BB", hex: "#fca1c1" },
+            { nome: "Laranja", hex: "#ff4500" },
+            { nome: "Amarelo BB", hex: "#fae96c" },
+            { nome: "Vinho", hex: "#5c0632" },
+            { nome: "Bege", hex: "#cfa076" },
+            { nome: "Rami", hex: "#8c7661" }
+        ];
+
+        function renderizarGradeCordoes() {
+            elCordaoGrid.innerHTML = "";
+            mostruarioCordao.forEach(cor => {
+                const box = document.createElement('div');
+                box.className = "cordao-box";
+                box.style.backgroundColor = cor.hex;
+                box.title = cor.nome;
+
+                if (cor.hex === corCordaoSelecionada) box.classList.add('active');
+
+                box.addEventListener('click', function() {
+                    document.querySelectorAll('.cordao-box').forEach(b => b.classList.remove('active'));
+                    box.classList.add('active');
+                    corCordaoSelecionada = cor.hex;
+                    processarETingirMockup();
+                });
+
+                elCordaoGrid.appendChild(box);
+            });
+        }
+
         function criarCamadaColorida(imgMascara, corHex) {
             const buffer = document.createElement('canvas');
             buffer.width = canvas.width;
@@ -298,50 +357,52 @@
             return buffer;
         }
 
-        // Renderizador principal com opacidade total no papel e no cordão mapeado
+        // MOTOR DE CAMADAS EXATO CONFORME A SUA ORIENTAÇÃO
         function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
-            // Mantém rigidamente a resolução nativa original da imagem em pixels
             canvas.width = imgSombra.naturalWidth;
             canvas.height = imgSombra.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Fundo neutro cinza claro
+            // Fundo neutro cinza de estúdio
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. APLICAR COR FORTE NO PAPEL
+            // CAMADA 1: Pintura da Cor Sólida do Papel
             if (imgBase.complete) {
                 const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
                 const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // 2. APLICAR COR FORTE NO CORDÃO (Mesma regra de opacidade total de preenchimento)
-            if (imgCordao.complete) {
-                const camadaCordao = criarCamadaColorida(imgCordao, elCorCordao.value);
-                ctx.drawImage(camadaCordao, 0, 0);
-            }
-
-            // 3. MULTIPLICAR AS SOMBRAS GLOBAIS POR CIMA (Realça dobras e o trançado do cordão sem desbotar)
-            ctx.save();
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.drawImage(imgSombra, 0, 0);
-            ctx.restore();
-
-            // 4. APLICAR LOGOTIPO DO CLIENTE CENTRALIZADO AUTOMÁTICO
+            // CAMADA 2: LOGOTIPO DO CLIENTE (Aplicada por cima do papel e por baixo do cordão/sombra)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
+                
+                // Centralização base no corpo da sacola
                 ctx.translate(canvas.width * 0.50, canvas.height * 0.53);
                 
+                // Escala proporcional a 35% da largura original do seu arquivo
                 let larguraLogo = canvas.width * 0.35;
                 let alturaLogo = (imgLogo.height / imgLogo.width) * larguraLogo;
                 
                 ctx.drawImage(imgLogo, -larguraLogo / 2, -alturaLogo / 2, larguraLogo, alturaLogo);
                 ctx.restore();
             }
+
+            // CAMADA 3: Pintura da Cor Sólida do Cordão (Sobrepõe as rebarbas da logo se houver)
+            if (imgCordao.complete) {
+                const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
+                ctx.drawImage(camadaCordao, 0, 0);
+            }
+
+            // CAMADA 4: MULTIPLICAÇÃO DA SOMBRA REAL POR CIMA DE TUDO (Une as dobras, o papel, a logo e a alça)
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.drawImage(imgSombra, 0, 0);
+            ctx.restore();
         }
         function carregarArquivosDoServidor() {
             const sentido = elModelo.value;
@@ -396,9 +457,11 @@
         });
 
         elModelo.addEventListener('change', carregarArquivosDoServidor);
-        elCorCordao.addEventListener('change', processarETingirMockup);
 
-        window.addEventListener('DOMContentLoaded', carregarArquivosDoServidor);
+        window.addEventListener('DOMContentLoaded', () => {
+            renderizarGradeCordoes();
+            carregarArquivosDoServidor();
+        });
     </script>
 </body>
 </html>
