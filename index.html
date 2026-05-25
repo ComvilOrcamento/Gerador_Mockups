@@ -253,3 +253,160 @@
             </div>
         </div>
     </div>
+    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
+    <script>
+        const canvas = document.getElementById('mockupCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const elModelo = document.getElementById('modelo');
+        const elCorPapel = document.getElementById('cor-papel');
+        const elCorCordao = document.getElementById('cordao');
+        const elInputLogo = document.getElementById('logo');
+        const elFileText = document.getElementById('file-text');
+        const elForm = document.getElementById('mockupForm');
+        const htmlLogoOverlay = document.getElementById('htmlLogoOverlay');
+
+        let imgBase = new Image();
+        let imgMaskSacola = new Image();
+        let imgMaskCordao = new Image();
+        let logoCarregada = false;
+
+        function criarCamadaColorida(imgMascara, corHex) {
+            const buffer = document.createElement('canvas');
+            buffer.width = canvas.width;
+            buffer.height = canvas.height;
+            const bCtx = buffer.getContext('2d');
+
+            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
+                bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
+                bCtx.globalCompositeOperation = 'source-in';
+                bCtx.fillStyle = corHex;
+                bCtx.fillRect(0, 0, buffer.width, buffer.height);
+            }
+            return buffer;
+        }
+
+        // Renderiza tudo na tela instantaneamente
+        function processarEMostrarMockup() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "#f5f5f7";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Renderiza o papel usando a máscara e a foto base (Efeito Hard-Light Realista)
+            if (imgMaskSacola.complete && imgBase.complete) {
+                const bufferPapel = document.createElement('canvas');
+                bufferPapel.width = canvas.width;
+                bufferPapel.height = canvas.height;
+                const pCtx = bufferPapel.getContext('2d');
+
+                pCtx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
+                pCtx.globalCompositeOperation = 'source-in';
+                pCtx.fillStyle = elCorPapel.value;
+                pCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                pCtx.globalCompositeOperation = 'hard-light';
+                pCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+
+                ctx.drawImage(bufferPapel, 0, 0);
+            }
+
+            // 2. Renderiza o cordão
+            if (imgMaskCordao.complete) {
+                const bufferCordao = document.createElement('canvas');
+                bufferCordao.width = canvas.width;
+                bufferCordao.height = canvas.height;
+                const cCtx = bufferCordao.getContext('2d');
+
+                cCtx.drawImage(imgMaskCordao, 0, 0, canvas.width, canvas.height);
+                cCtx.globalCompositeOperation = 'source-in';
+                cCtx.fillStyle = elCorCordao.value;
+                cCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                cCtx.globalCompositeOperation = 'multiply';
+                cCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+
+                ctx.drawImage(bufferCordao, 0, 0);
+            }
+
+            // 3. Aplica as sombras reais do cenário
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            // 4. Reposiciona a logo se ela estiver carregada
+            if (logoCarregada) {
+                htmlLogoOverlay.style.display = 'block';
+                if (elModelo.value === 'horizontal') {
+                    htmlLogoOverlay.style.width = '52%';
+                    htmlLogoOverlay.style.left = '48%';
+                    htmlLogoOverlay.style.top = '54%';
+                    htmlLogoOverlay.style.transform = 'translate(-50%, -50%) rotate(-1.8deg) skewY(-1.8deg)';
+                } else {
+                    htmlLogoOverlay.style.width = '38%';
+                    htmlLogoOverlay.style.left = '50%';
+                    htmlLogoOverlay.style.top = '55%';
+                    htmlLogoOverlay.style.transform = 'translate(-50%, -50%) rotate(0deg) skewY(0deg)';
+                }
+            } else {
+                htmlLogoOverlay.style.display = 'none';
+            }
+        }
+        // Troca os arquivos de imagem imediatamente ao mudar no campo Variação e deixa fixo
+        function carregarArquivosEAtualizar() {
+            const modelo = elModelo.value;
+            let carregadas = 0;
+
+            function verificarPronto() {
+                carregadas++;
+                if (carregadas === 3) {
+                    processarEMostrarMockup();
+                }
+            }
+
+            imgBase.onload = verificarPronto;
+            imgMaskSacola.onload = verificarPronto;
+            imgMaskCordao.onload = verificarPronto;
+
+            if (modelo === 'vertical') {
+                imgBase.src = 'sacola_vertical_sombras.png';
+                imgMaskSacola.src = 'rímel vertical.png'; 
+                imgMaskCordao.src = 'cordao_vertical_mascara.png';
+            } else {
+                imgBase.src = 'horizontal-sacola-branca.png';
+                imgMaskSacola.src = 'horizontal-sacola-mascara.png';
+                imgMaskCordao.src = 'horizontal-cordao-mascara.png';
+            }
+        }
+
+        // Escuta os uploads de logotipo do usuário
+        elInputLogo.addEventListener('change', function() {
+            if (this.files && this.files) {
+                elFileText.textContent = this.files.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    htmlLogoOverlay.src = e.target.result;
+                    logoCarregada = true;
+                    processarEMostrarMockup(); // Atualiza a logo em tempo real na tela
+                };
+                reader.readAsDataURL(this.files);
+            }
+        });
+
+        // Eventos instantâneos: muda a imagem na tela na hora que seleciona
+        elModelo.addEventListener('change', carregarArquivosEAtualizar);
+        elCorPapel.addEventListener('change', processarEMostrarMockup);
+        elCorCordao.addEventListener('change', processarEMostrarMockup);
+
+        // O botão agora serve apenas para forçar uma nova renderização manual se necessário
+        elForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            processarEMostrarMockup();
+        });
+
+        // Dispara o carregamento do primeiro modelo fixo (Vertical) assim que a página abre
+        window.addEventListener('DOMContentLoaded', carregarArquivosEAtualizar);
+    </script>
+</body>
+</html>
