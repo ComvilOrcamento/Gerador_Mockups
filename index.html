@@ -152,7 +152,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #e2e8f0;
+            background-color: #f9f9f9;
         }
 
         canvas {
@@ -188,8 +188,8 @@
                 <div class="form-group">
                     <label for="modelo">Variação *</label>
                     <select id="modelo" required>
-                        <option value="horizontal">Horizontal</option>
                         <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
                     </select>
                 </div>
 
@@ -255,40 +255,50 @@
         let imgLogoClient = new Image();
         let logoCarregada = false;
 
-        // Fundo neutro de estúdio
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Renderizador avançado com mesclagem fotográfica baseada na foto enviada
+        function criarCamadaColorida(imgMascara, corHex) {
+            const buffer = document.createElement('canvas');
+            buffer.width = canvas.width;
+            buffer.height = canvas.height;
+            const bCtx = buffer.getContext('2d');
+
+            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
+                bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
+                bCtx.globalCompositeOperation = 'source-in';
+                bCtx.fillStyle = corHex;
+                bCtx.fillRect(0, 0, buffer.width, buffer.height);
+            }
+            return buffer;
+        }
+
         function processarEMostrarMockup() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Fundo cinza claro idêntico ao cenário da foto enviada
+            // Fundo neutro de estúdio
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. PRIMEIRA ETAPA: Mesclagem do papel usando Hard-Light para reter brilhos e luzes reais
+            // 1. Renderiza a cor do papel combinando a máscara com a base real (Efeito Hard-Light para realismo fotográfico)
             if (imgMaskSacola.complete && imgBase.complete) {
                 const bufferPapel = document.createElement('canvas');
                 bufferPapel.width = canvas.width;
                 bufferPapel.height = canvas.height;
                 const pCtx = bufferPapel.getContext('2d');
 
-                // Recorta a cor exata dentro do papel da sacola
                 pCtx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
                 pCtx.globalCompositeOperation = 'source-in';
                 pCtx.fillStyle = elCorPapel.value;
                 pCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Aplica a textura da foto real por cima usando hard-light
                 pCtx.globalCompositeOperation = 'hard-light';
                 pCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
 
-                // Desenha o resultado pronto no quadro visível
                 ctx.drawImage(bufferPapel, 0, 0);
             }
 
-            // 2. SEGUNDA ETAPA: Pintura e iluminação do Cordão
+            // 2. Renderiza a cor do cordão
             if (imgMaskCordao.complete) {
                 const bufferCordao = document.createElement('canvas');
                 bufferCordao.width = canvas.width;
@@ -306,31 +316,27 @@
                 ctx.drawImage(bufferCordao, 0, 0);
             }
 
-            // 3. TERCEIRA ETAPA: Aplicação das sombras do cenário (chão e fundo da foto)
+            // 3. Sobrepõe as sombras do cenário externo (chão e fundo)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
             ctx.restore();
 
-            // 4. QUARTA ETAPA: Inserção do Logotipo respeitando a perspectiva real da foto
+            // 4. Desenha a logo do cliente respeitando a perspectiva real
             if (logoCarregada && imgLogoClient.complete) {
                 ctx.save();
                 
                 if (elModelo.value === 'horizontal') {
-                    // Eixos calibrados especificamente para a face da sacola horizontal da foto
+                    // Configurações baseadas na foto em perspectiva enviada
                     ctx.translate(canvas.width * 0.48, canvas.height * 0.54);
-                    
-                    // Rotação e inclinação vertical (Skew) para deitar a logo sobre o papel em perspectiva
                     ctx.rotate(-1.8 * Math.PI / 180);
                     ctx.transform(1, -0.026, 0, 1, 0, 0);
                     
-                    // Tamanho seguro automático idêntico à proporção da sacola "Sarah Flor" da foto
                     let larguraLogo = canvas.width * 0.52;
                     let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
-                    
                     ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
                 } else {
-                    // Posicionamento padrão para o modelo Vertical
+                    // Configuração centralizada para o modelo Vertical
                     ctx.translate(canvas.width * 0.50, canvas.height * 0.55);
                     let larguraLogo = canvas.width * 0.38;
                     let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
@@ -355,7 +361,7 @@
             e.preventDefault();
 
             if (!logoCarregada) {
-                alert("Por favor, selecione o logotipo antes de gerar o mockup.");
+                alert("Por favor, selecione o logotipo antes de gerar.");
                 return;
             }
 
@@ -365,10 +371,10 @@
 
             const modelo = elModelo.value;
 
-            // Busca os arquivos direto na raiz do servidor
+            // ERROS CORRIGIDOS: JavaScript lendo exatamente os nomes reais do seu FTP/Gerenciador de arquivos
             if (modelo === 'vertical') {
-                imgBase.src = 'sacola_vertical_base.png';
-                imgMaskSacola.src = 'sacola_vertical_mascara.png';
+                imgBase.src = 'sacola_vertical_sombras.png';
+                imgMaskSacola.src = 'rímel vertical.png'; // Lê o arquivo rímel como a máscara do papel
                 imgMaskCordao.src = 'cordao_vertical_mascara.png';
             } else {
                 imgBase.src = 'horizontal-sacola-branca.png';
