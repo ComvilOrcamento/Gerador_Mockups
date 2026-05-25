@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Sistema de Cores</title>
+    <title>Variações de Sacola - Cores Intensas</title>
     <style>
         * {
             margin: 0;
@@ -83,7 +83,7 @@
             border-color: #003366;
         }
 
-        /* Quadro de Visualização */
+        /* Quadro de Visualização Flexível */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -107,6 +107,7 @@
             background-color: #f5f5f7;
         }
 
+        /* Mantém o canvas responsivo na tela, mas preserva os pixels internos originais */
         canvas {
             max-width: 100%;
             max-height: 100%;
@@ -125,7 +126,7 @@
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
-            <!-- Campo 1: Sentido/Variação -->
+            <!-- Campo 1: Variação -->
             <div class="form-group">
                 <label for="modelo">Variação *</label>
                 <select id="modelo">
@@ -134,7 +135,7 @@
                 </select>
             </div>
 
-            <!-- Campo 2: Cor do Papel (Novo Campo Adicionado) -->
+            <!-- Campo 2: Cor do Papel -->
             <div class="form-group">
                 <label for="cor-papel">Cor de Papel *</label>
                 <select id="cor-papel">
@@ -154,12 +155,11 @@
 
         <div class="preview-container">
             <div class="preview-box">
-                <!-- O Canvas vai misturar a cor escolhida com a imagem de sombra de forma realista -->
-                <canvas id="mockupCanvas" width="1000" height="1000"></canvas>
+                <canvas id="mockupCanvas"></canvas>
             </div>
         </div>
     </div>
-    <!-- LOGICA JAVASCRIPT -->
+    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -167,62 +167,59 @@
         const elModelo = document.getElementById('modelo');
         const elCorPapel = document.getElementById('cor-papel');
 
-        let imgBase = new Image();
         let imgSombra = new Image();
 
-        // Inicializa o fundo do visualizador
-        ctx.fillStyle = "#f5f5f7";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Renderizador em tempo real: aplica a cor do painel diretamente na silhueta da sombra
         function processarETingirSacola() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Fundo neutro idêntico ao cenário fotográfico
+            if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
+
+            // MANTER O TAMANHO ORIGINAL: Força o canvas a ter os pixels exatos da imagem fornecida
+            canvas.width = imgSombra.naturalWidth;
+            canvas.height = imgSombra.naturalHeight;
+
+            // Limpa o fundo do quadro com a cor cinza neutra de estúdio
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Mistura matemática: cria um rascunho com a cor e funde os canais pretos da sombra
-            if (imgSombra.complete && imgSombra.naturalWidth !== 0) {
-                const bufferTinta = document.createElement('canvas');
-                bufferTinta.width = canvas.width;
-                bufferTinta.height = canvas.height;
-                const bCtx = bufferTinta.getContext('2d');
+            // Criar a camada de tinta forte e 100% opaca baseada na silhueta da sacola
+            const bufferTinta = document.createElement('canvas');
+            bufferTinta.width = canvas.width;
+            bufferTinta.height = canvas.height;
+            const bCtx = bufferTinta.getContext('2d');
 
-                // 1. Desenha a silhueta da sombra para capturar o formato da sacola
-                bCtx.drawImage(imgSombra, 0, 0, canvas.width, canvas.height);
-                
-                // 2. Recorta e injeta a cor exata selecionada no menu de cores fixas
-                bCtx.globalCompositeOperation = 'source-in';
-                bCtx.fillStyle = elCorPapel.value;
-                bCtx.fillRect(0, 0, canvas.width, canvas.height);
+            // 1. Desenha a silhueta original da imagem recebida no rascunho
+            bCtx.drawImage(imgSombra, 0, 0);
+            
+            // 2. Recorta e preenche com a cor sólida e forte selecionada (Elimina a transparência)
+            bCtx.globalCompositeOperation = 'source-in';
+            bCtx.fillStyle = elCorPapel.value;
+            bCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // 3. Aplica a textura real da sombra por cima usando a técnica 'hard-light' (preserva luzes e vincos)
-                bCtx.globalCompositeOperation = 'hard-light';
-                bCtx.drawImage(imgSombra, 0, 0, canvas.width, canvas.height);
+            // 3. Desenha a base colorida e sólida direto na tela principal
+            ctx.drawImage(bufferTinta, 0, 0);
 
-                // Desenha a sacola colorida finalizada na tela
-                ctx.drawImage(bufferTinta, 0, 0);
-            }
+            // 4. Aplica as sombras fotográficas por cima com multiplicação pura (Mantém a cor viva e realça vincos)
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.drawImage(imgSombra, 0, 0);
+            ctx.restore();
         }
-        // Altera o caminho dos arquivos buscando na raiz com base no padrão estrito de nomes
+        // Altera as imagens buscando o padrão estrito de nomenclatura na raiz do servidor
         function carregarModelos() {
             const sentido = elModelo.value; // 'vertical' ou 'horizontal'
 
-            // Evita bloqueios de segurança do navegador (CORS) ao processar pixels
+            // Desativa bloqueios internos do navegador para manipulação de pixels nativos
             imgSombra.crossOrigin = "anonymous";
-
             imgSombra.onload = processarETingirSacola;
 
-            // Busca os arquivos com a palavra 'sombra' conforme o novo padrão estruturado
+            // Busca os arquivos com a nomenclatura correspondente
             imgSombra.src = `sacola_${sentido}_sombra.png`;
         }
 
-        // Escuta os seletores para mudar na tela imediatamente, sem precisar clicar em botão
+        // Eventos instantâneos de alteração dos seletores
         elModelo.addEventListener('change', carregarModelos);
         elCorPapel.addEventListener('change', processarETingirSacola);
 
-        // Inicializa o sistema fixando o modelo Vertical ao carregar o site
+        // Inicializa o primeiro modelo fixo (Vertical) assim que a página carrega
         window.addEventListener('DOMContentLoaded', carregarModelos);
     </script>
 </body>
