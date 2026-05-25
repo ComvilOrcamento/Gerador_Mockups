@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup Realista 3D</title>
+    <title>Gerador de Mockup Realista</title>
     <style>
         * {
             margin: 0;
@@ -126,6 +126,11 @@
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #002244;
         }
 
         /* Área de Visualização do Canvas */
@@ -231,7 +236,8 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-submit">Baixar Imagem Final</button>
+                <!-- Botão alterado para apenas gerar a imagem na tela -->
+                <button type="submit" class="btn-submit">Gerar Imagem</button>
             </form>
         </div>
 
@@ -242,8 +248,7 @@
             </div>
         </div>
     </div>
-    <script>
-       <!-- LOGICA JAVASCRIPT CORRIGIDA -->
+    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -263,7 +268,11 @@
         let imgLogoClient = new Image();
         let logoCarregada = false;
 
-        // Função para pintar as máscaras usando canvas auxiliares isolados (Evita conflito de cor)
+        // Limpa a tela inicial para o usuário saber que precisa clicar em gerar
+        ctx.fillStyle = "#f0f0f0";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Função auxiliar que isola a pintura da cor dentro do formato da máscara
         function criarCamadaColorida(imgMascara, corHex) {
             const buffer = document.createElement('canvas');
             buffer.width = canvas.width;
@@ -271,88 +280,64 @@
             const bCtx = buffer.getContext('2d');
 
             if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
-                // 1. Desenha a silhueta da máscara no rascunho
                 bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
-                // 2. Ativa o recorte geométrico estrito
                 bCtx.globalCompositeOperation = 'source-in';
-                // 3. Preenche com a cor pura escolhida no painel
                 bCtx.fillStyle = corHex;
                 bCtx.fillRect(0, 0, buffer.width, buffer.height);
             }
             return buffer;
         }
 
-        // Renderizador principal unificado
-        function renderizarMockup() {
-            // Limpa completamente o quadro visível para evitar fantasmas de cor
+        // Função de montagem que mistura as cores, sombras e aplica a logo
+        function processarEMostrarMockup() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.globalCompositeOperation = 'source-over';
 
-            // Passo 1: Desenha a cor do papel recortada da máscara isolada
+            // 1. Aplica a cor do Papel através da máscara de sacola
             if (imgMaskSacola.complete) {
                 const camadaPapel = criarCamadaColorida(imgMaskSacola, elCorPapel.value);
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // Passo 2: Desenha a cor do cordão recortada da máscara isolada por cima
+            // 2. Aplica a cor do Cordão através da máscara de cordão por cima
             if (imgMaskCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgMaskCordao, elCorCordao.value);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // Passo 3: Aplica a foto real de base (Sombras e Texturas) multiplicando os tons
-            if (imgBase.complete && imgBase.naturalWidth !== 0) {
+            // 3. Aplica a Foto Real com Sombras de base multiplicando as cores
+            if (imgBase.complete) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'multiply';
                 ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
                 ctx.restore();
             }
 
-            // Passo 4: Insere a logomarca do cliente centralizada com controle de zoom
+            // 4. Aplica a Logomarca Centralizada com Controle de Zoom
             if (logoCarregada && imgLogoClient.complete) {
                 ctx.save();
                 
-                // Centralização base (Eixo X: 50%, Eixo Y: 52%)
-                ctx.translate(canvas.width * 0.50, canvas.height * 0.52);
-                
-                let percentualZoom = elLogoZoom.value / 100;
-                let larguraLogo = canvas.width * percentualZoom;
-                let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
-                
-                ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
+                if (elModelo.value === 'vertical') {
+                    ctx.translate(canvas.width * 0.50, canvas.height * 0.52);
+                    let percentualZoom = elLogoZoom.value / 100;
+                    let larguraLogo = canvas.width * percentualZoom;
+                    let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
+                    ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
+                } else {
+                    // Configuração tridimensional inclinada para a sacola horizontal
+                    ctx.translate(canvas.width * 0.54, canvas.height * 0.50);
+                    ctx.rotate(-1.5 * Math.PI / 180);
+                    ctx.transform(1, -0.026, 0, 1, 0, 0);
+                    
+                    let percentualZoom = elLogoZoom.value / 100;
+                    let larguraLogo = canvas.width * percentualZoom;
+                    let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
+                    ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
+                }
                 ctx.restore();
             }
         }
-
-        // Alterna os arquivos com base na variação escolhida
-        function alternarModelo() {
-            const modelo = elModelo.value;
-
-            if (modelo === 'vertical') {
-                // Utiliza exatamente os seus nomes para o modelo Vertical
-                imgBase.src = 'sacola_vertical_base.png';
-                imgMaskSacola.src = 'sacola_vertical_mascara.png';
-                imgMaskCordao.src = 'cordao_vertical_mascara.png';
-            } else {
-                // Deixa preparado para receber os nomes do modelo horizontal no futuro
-                imgBase.src = 'horizontal-sacola-branca.png';
-                imgMaskSacola.src = 'horizontal-sacola-mascara.png';
-                imgMaskCordao.src = 'horizontal-cordao-mascara.png';
-            }
-        }
-
-        // Eventos de gatilho para redesenhar o canvas instantaneamente
-        imgBase.onload = renderizarMockup;
-        imgMaskSacola.onload = renderizarMockup;
-        imgMaskCordao.onload = renderizarMockup;
-        imgLogoClient.onload = renderizarMockup;
-
-        elModelo.addEventListener('change', alternarModelo);
-        elCorPapel.addEventListener('change', renderizarMockup);
-        elCorCordao.addEventListener('change', renderizarMockup);
-        elLogoZoom.addEventListener('input', renderizarMockup); // Atualiza enquanto arrasta o zoom
-
-        // Carrega o arquivo de imagem do cliente
+        // Disparado quando o usuário escolhe o arquivo de logotipo
         elInputLogo.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 elFileText.textContent = this.files[0].name;
@@ -365,21 +350,61 @@
             }
         });
 
-        // Evento para baixar o resultado final de forma nativa e sem quebras
+        // O BOTÃO GERAR: Só carrega as imagens do servidor e renderiza ao ser clicado
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            if(!logoCarregada) {
-                alert("Por favor, selecione um logotipo antes de baixar.");
+
+            if (!logoCarregada) {
+                alert("Por favor, selecione o arquivo de logotipo primeiro.");
                 return;
             }
-            const link = document.createElement('a');
-            link.download = `mockup-${elModelo.value}-final.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
+
+            const submitBtn = elForm.querySelector('.btn-submit');
+            submitBtn.textContent = "Gerando...";
+            submitBtn.disabled = true;
+
+            const modelo = elModelo.value;
+
+            // Define quais arquivos carregar de acordo com a variação
+            if (modelo === 'vertical') {
+                imgBase.src = 'sacola_vertical_base.png';
+                imgMaskSacola.src = 'sacola_vertical_mascara.png';
+                imgMaskCordao.src = 'cordao_vertical_mascara.png';
+            } else {
+                imgBase.src = 'horizontal-sacola-branca.png';
+                imgMaskSacola.src = 'horizontal-sacola-mascara.png';
+                imgMaskCordao.src = 'horizontal-cordao-mascara.png';
+            }
+
+            // Aguarda o carregamento completo de todas as imagens para poder misturar na tela
+            let imagensCarregadas = 0;
+            function conferirCarregamento() {
+                imagensCarregadas++;
+                if (imagensCarregadas === 3) {
+                    processarEMostrarMockup();
+                    submitBtn.textContent = "Gerar Imagem";
+                    submitBtn.disabled = false;
+                }
+            }
+
+            imgBase.onload = conferirCarregamento;
+            imgMaskSacola.onload = conferirCarregamento;
+            imgMaskCordao.onload = conferirCarregamento;
+            
+            // Se as imagens já tiverem no cache do servidor, força o re-processamento
+            if (imgBase.complete && imgMaskSacola.complete && imgMaskCordao.complete) {
+                processarEMostrarMockup();
+                submitBtn.textContent = "Gerar Imagem";
+                submitBtn.disabled = false;
+            }
         });
 
-        // Inicializa o sistema na abertura do navegador
-        window.addEventListener('DOMContentLoaded', alternarModelo);
+        // Atualiza a visualização em tempo real caso o usuário mexa no Zoom após gerar
+        elLogoZoom.addEventListener('input', () => {
+            if(logoCarregada && imgBase.src) {
+                processarEMostrarMockup();
+            }
+        });
     </script>
 </body>
 </html>
