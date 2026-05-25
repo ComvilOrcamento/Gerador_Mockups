@@ -3,304 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comvil - Gerador de Mockups Pro 3D</title>
+    <title>Gerador de Mockup 3D</title>
+    
+    <!-- Biblioteca para captura e download da tela -->
+    <script src="https://cloudflare.com"></script>
+
+    <!-- ESTILOS CSS -->
     <style>
-        :root {
-            --primary: #003366;
-            --secondary: #0056b3;
-            --bg-light: #f1f5f9;
-            --border: #cbd5e1;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: var(--bg-light); padding: 30px; display: flex; justify-content: center; align-items: start; gap: 30px; }
-        
-        .painel-controle { background: white; width: 360px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .painel-preview { background: white; flex: 1; max-width: 650px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 550px; }
-        
-        h1 { font-size: 20px; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
-        
-        .field { display: flex; flex-direction: column; margin-bottom: 15px; }
-        label { font-size: 11px; margin-bottom: 5px; color: #555; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; background: #fff; height: 38px; }
-        
-        .btn-gerar { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold; margin-top: 15px; transition: background 0.2s; }
-        .btn-gerar:hover { background: #002244; }
-        
-        .btn-baixar { background: #25D366; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold; text-decoration: none; margin-top: 20px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-baixar:hover { background: #128C7E; }
-        
-        canvas { border: 1px solid var(--border); border-radius: 8px; max-width: 100%; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        body {
+            background-color: #f3f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1100px;
+            gap: 30px;
+            align-items: stretch;
+        }
+
+        /* Formulário Lateral Esquerdo */
+        .form-container {
+            background-color: #ffffff;
+            padding: 30px 25px;
+            border-radius: 8px;
+            width: 35%;
+            min-width: 320px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        h2 {
+            color: #003366;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #555555;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #333333;
+            font-size: 14px;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://w3.org' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px;
+        }
+
+        select:focus {
+            border-color: #003366;
+        }
+
+        /* Botão Personalizado para Upload */
+        .file-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            padding: 6px;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .btn-file {
+            background-color: #efefef;
+            border: 1px solid #dddddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333333;
+            pointer-events: none;
+        }
+
+        .file-text {
+            font-size: 13px;
+            color: #666666;
+            margin-left: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #003366;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #002244;
+        }
+
+        /* Área do Visualizador Direita */
+        .preview-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            flex-grow: 1;
+            padding: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        .preview-box {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Estrutura das Camadas */
+        .mockup-layers {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        /* Máscaras CSS usando Masking */
+        .layer-mascara-sacola {
+            z-index: 2;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+        }
+
+        .layer-cor-sacola { z-index: 1; }
+
+        .layer-mascara-cordao {
+            z-index: 4;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+        }
+
+        .layer-cor-cordao { z-index: 3; }
+
+        .layer-base {
+            z-index: 5;
+            mix-blend-mode: multiply; 
+        }
+
+        /* Encaixe Fino da Logo Cliente */
+        .layer-logo {
+            position: absolute;
+            z-index: 6;
+            filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.15)); 
+            mix-blend-mode: multiply;
+        }
+
+        /* Ajustes para Mobile */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .form-container { width: 100%; }
+            .mockup-layers { min-height: 350px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="painel-controle">
-    <h1>Mockup Corrigido 3D</h1>
-    
-    <div class="field">
-        <label>Modelo da Sacola *</label>
-        <select id="modeloSacola" onchange="limparPreview()">
-            <option value="de-pe">Sacola De Pé (Vertical)</option>
-            <option value="deitada" selected>Sacola Deitada (Horizontal)</option>
-        </select>
-    </div>
-
-    <div class="field">
-        <label>Logotipo do Cliente (PNG Transparente) *</label>
-        <input type="file" id="logoCliente" accept="image/png" style="padding-top: 7px;">
-    </div>
-
-    <div class="field">
-        <label>Cor do Cordão / Alça *</label>
-        <select id="corCordao">
-            <option value="#ffffff">Branco</option>
-            <option value="#000000" selected>Preto</option>
-            <option value="#d2b48c">Kraft / Pardo</option>
-            <option value="#003366">Azul Marinho</option>
-            <option value="#cc0000">Vermelho</option>
-        </select>
-    </div>
-
-    <div class="field">
-        <label>Quantidade de Cores Gravadas *</label>
-        <select id="numCores">
-            <option value="1">1 Cor</option>
-            <option value="2">2 Cores</option>
-            <option value="3">3 Cores</option>
-            <option value="4">4 Cores</option>
-            <option value="cromia">Cromia / Papel</option>
-        </select>
-    </div>
-
-    <button class="btn-gerar" onclick="processarEMockup()">Gerar Mockup Perfeito</button>
-</div>
-
-<div class="painel-preview">
-    <canvas id="canvasMockup" width="600" height="600"></canvas>
-    <a id="btnBaixarImage" href="#" download="Mockup_Corrigido_Comvil.png" class="btn-baixar">Baixar Imagem do Mockup</a>
-</div>
-<script>
-let imgLogo = null;
-let corIdentificadaAutomatica = "#00bcd4";
-
-// Banco de dados conectado com as suas fotos físicas soltas na pasta do servidor
-const bancoModelosSacola = {
-    "de-pe": {
-        "shadow": "sacola_pe_sombras.png",
-        "areaUtil": { x: 140, y: 170, largura: 210, altura: 210 }
-    },
-    "deitada": {
-        "shadow": "sacola_deitada_sombras.png",
-        "areaUtil": { x: 145, y: 200, largura: 240, altura: 185 }
-    }
-};
-
-// Gerenciador de upload: lê a logo do cliente
-document.getElementById('logoCliente').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            imgLogo = new Image();
-            imgLogo.onload = function() {
-                extrairCorPredominante();
-                limparPreview();
-            };
-            imgLogo.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-function extrairCorPredominante() {
-    const canvasTemp = document.createElement('canvas');
-    const ctxTemp = canvasTemp.getContext('2d');
-    canvasTemp.width = 100;
-    canvasTemp.height = 100;
-    
-    ctxTemp.drawImage(imgLogo, 0, 0, canvasTemp.width, canvasTemp.height);
-    const imgData = ctxTemp.getImageData(0, 0, canvasTemp.width, canvasTemp.height).data;
-    
-    let contagemCores = {};
-    let maiorContagem = 0;
-    let corMaisFrequente = "#00bcd4";
-
-    for (let i = 0; i < imgData.length; i += 4) {
-        let r = imgData[i];   let g = imgData[i+1];
-        let b = imgData[i+2]; let a = imgData[i+3];
-
-        // Filtro estrito: ignora fundo transparente, brancos da logo e pretos da borda/fundo
-        if (a < 230) continue; 
-        if (r > 230 && g > 230 && b > 230) continue; 
-        if (r < 30 && g < 30 && b < 30) continue; 
-
-        let rgbChave = `${r},${g},${b}`;
-        contagemCores[rgbChave] = (contagemCores[rgbChave] || 0) + 1;
-
-        if (contagemCores[rgbChave] > maiorContagem) {
-            maiorContagem = contagemCores[rgbChave];
-            corMaisFrequente = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        }
-    }
-    corIdentificadaAutomatica = corMaisFrequente;
-}
-
-function limparPreview() {
-    const canvas = document.getElementById('canvasMockup');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    document.getElementById('btnBaixarImage').style.display = 'none';
-}
-
-function carregarImagemAsync(src) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error("Erro ao abrir imagem: " + src));
-        img.src = src;
-    });
-}
-function desenharFormaSacola(ctx, modelo, corSacola) {
-    ctx.fillStyle = corSacola;
-    ctx.beginPath();
-    
-    if (modelo === 'de-pe') {
-        // Formato liso frontal - Sacola em Pé
-        ctx.moveTo(160, 150);
-        ctx.lineTo(410, 150);
-        ctx.lineTo(380, 460);
-        ctx.lineTo(160, 460);
-        ctx.closePath();
-        ctx.fill();
-
-        // Fole Lateral Liso Branco
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.moveTo(410, 150);
-        ctx.lineTo(465, 170);
-        ctx.lineTo(425, 450);
-        ctx.lineTo(380, 460);
-        ctx.closePath();
-        ctx.fill();
-    } else {
-        // Formato liso frontal - Sacola Deitada (Sarah Flor corrigida)
-        ctx.moveTo(130, 190);
-        ctx.lineTo(440, 190);
-        ctx.lineTo(420, 450);
-        ctx.lineTo(165, 450);
-        ctx.closePath();
-        ctx.fill();
-
-        // Fole Lateral Liso no mesmo tom
-        ctx.beginPath();
-        ctx.moveTo(440, 190);
-        ctx.lineTo(480, 180);
-        ctx.lineTo(455, 425);
-        ctx.lineTo(420, 450);
-        ctx.closePath();
-        ctx.fill();
-    }
-}
-
-async function processarEMockup() {
-    const canvas = document.getElementById('canvasMockup');
-    const ctx = canvas.getContext('2d');
-    const modelo = document.getElementById('modeloSacola').value;
-    const numCores = document.getElementById('numCores').value;
-    const corCordao = document.getElementById('corCordao').value;
-    const configModelo = bancoModelosSacola[modelo];
-
-    // 1. Fundo limpo de estúdio infinito com degradê suave
-    let gradEstudio = ctx.createRadialGradient(300, 300, 50, 300, 300, 400);
-    gradEstudio.addColorStop(0, "#ffffff");
-    gradEstudio.addColorStop(1, "#e2e8f0");
-    ctx.fillStyle = gradEstudio;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Sombra projetada de contato no chão (Efeito drop shadow 3D)
-    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
-    ctx.beginPath();
-    ctx.ellipse(300, 465, 190, 15, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 2. Desenha a forma sólida e perfeita da sacola (Corrige o serrilhado e rebarbas)
-    ctx.save();
-    desenharFormaSacola(ctx, modelo, corIdentificadaAutomatica);
-    ctx.restore();
-
-    // 3. Aplica a marca centralizada e com proporção estrita travada
-    if (imgLogo) {
-        let areaUtil = configModelo.areaUtil;
-        let proporcaoLogo = imgLogo.width / imgLogo.height;
-        let larguraAlvo = areaUtil.largura * 0.70; // Ocupa até 70% do espaço frontal
-        let alturaAlvo = larguraAlvo / proporcaoLogo;
-
-        if (alturaAlvo > areaUtil.altura * 0.65) {
-            alturaAlvo = areaUtil.altura * 0.65;
-            larguraAlvo = alturaAlvo * proporcaoLogo;
-        }
-
-        let posX = areaUtil.x + (areaUtil.largura - larguraAlvo) / 2;
-        let posY = areaUtil.y + (areaUtil.altura - alturaAlvo) / 2;
-
-        ctx.save();
-        ctx.drawImage(imgLogo, posX, posY, larguraAlvo, alturaAlvo);
-        ctx.restore();
-    }
-
-    try {
-        // 4. Carrega a foto branca para fundir apenas as dobras reais e os cordões por cima
-        const imgSombras Reais = await carregarImagemAsync(configModelo.shadow);
-
-        // Cria um canvas auxiliar para isolar e tingir os cordões de forma limpa
-        const canvasAlca = document.createElement('canvas');
-        canvasAlca.width = canvas.width; canvasAlca.height = canvas.height;
-        const ctxAlca = canvasAlca.getContext('2d');
-        ctxAlca.drawImage(imgSombrasReais, 0, 0, canvas.width, canvas.height);
-
-        // Mescla as dobras de luz e sombra reais por cima da cor e do logotipo
-        ctx.save();
-        ctx.globalCompositeOperation = "multiply";
-        ctx.drawImage(imgSombrasReais, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
-
-        // 5. Injeta a cor selecionada nos cordões usando máscara de luminância
-        const alcaData = ctxAlca.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = alcaData.data;
-        const rC = parseInt(corCordao.slice(1, 3), 16);
-        const gC = parseInt(corCordao.slice(3, 5), 16);
-        const bC = parseInt(corCordao.slice(5, 7), 16);
-        let limiteY = modelo === 'de-pe' ? 185 : 230;
-
-        for (let i = 0; i < pixels.length; i += 4) {
-            let r = pixels[i]; let g = pixels[i+1]; let b = pixels[i+2]; let a = pixels[i+3];
-            let idx = i / 4; let linhaY = Math.floor(idx / canvas.width);
+    <div class="container">
+        <!-- Formulário Esquerdo -->
+        <div class="form-container">
+            <h2>Mockup Corrigido 3D</h2>
             
-            // Filtra e colore apenas a região dos cordões claros superiores
-            if (linhaY < limiteY && r > 180 && g > 180 && b > 180 && a > 10) {
-                let fator = (r + g + b) / 3 / 255;
-                pixels[i] = rC * fator; pixels[i+1] = gC * fator; pixels[i+2] = bC * fator;
+            <form id="mockupForm">
+                <div class="form-group">
+                    <label for="modelo">Modelo da Sacola *</label>
+                    <select id="modelo" required>
+                        <option value="horizontal">Sacola Deitada (Horizontal)</option>
+                        <option value="vertical">Sacola Em Pé (Vertical)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="logo">Logotipo do Cliente (PNG Transparente) *</label>
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn-file">Escolher ficheiro</button>
+                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                        <input type="file" id="logo" accept="image/png" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cordao">Cor do Cordão / Alça *</label>
+                    <select id="cordao" required>
+                        <option value="#000000">Preto</option>
+                        <option value="#ffffff">Branco</option>
+                        <option value="#ff0000">Vermelho</option>
+                        <option value="#003366">Azul Escuro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cor-sacola">Cor da Sacola *</label>
+                    <select id="cor-sacola" required>
+                        <option value="#ffffff">Branco</option>
+                        <option value="#000000">Preto</option>
+                        <option value="#c2a67a">Pardo / Kraft</option>
+                        <option value="#0055ff">Azul</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit">Gerar e Baixar Mockup</button>
+            </form>
+        </div>
+
+        <!-- Visualizador Direito (Camadas) -->
+        <div class="preview-container">
+            <div class="preview-box">
+                <div class="mockup-layers" id="mockupContainer">
+                    
+                    <div class="layer layer-cor-sacola" id="layerCorSacola"></div>
+                    <div class="layer layer-mascara-sacola" id="maskSacola"></div>
+                    
+                    <div class="layer layer-cor-cordao" id="layerCorCordao"></div>
+                    <div class="layer layer-mascara-cordao" id="maskCordao"></div>
+                    
+                    <img class="layer layer-base" id="imgBase" src="horizontal-sacola-branca.png" alt="Base">
+                    
+                    <img class="layer layer-logo" id="previewLogo" src="" alt="" style="display:none;">
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- LOGICA JAVASCRIPT -->
+    <script>
+        const elModelo = document.getElementById('modelo');
+        const elCorSacola = document.getElementById('cor-sacola');
+        const elCorCordao = document.getElementById('cordao');
+        const elInputLogo = document.getElementById('logo');
+        const elFileText = document.getElementById('file-text');
+
+        const imgBase = document.getElementById('imgBase');
+        const maskSacola = document.getElementById('maskSacola');
+        const maskCordao = document.getElementById('maskCordao');
+        const previewLogo = document.getElementById('previewLogo');
+        const elForm = document.getElementById('mockupForm');
+        const mockupContainer = document.getElementById('mockupContainer');
+
+        function atualizarMockup() {
+            const modelo = elModelo.value;
+            const corSacolaHex = elCorSacola.value;
+            const corCordaoHex = elCorCordao.value;
+
+            if (modelo === 'vertical') {
+                imgBase.src = 'sacola_vertical_sombras.png';
+                
+                maskSacola.style.webkitMaskImage = "url('sacola_vertical_mascara.png')";
+                maskSacola.style.maskImage = "url('sacola_vertical_mascara.png')";
+                
+                maskCordao.style.webkitMaskImage = "url('cordao_vertical_mascara.png')";
+                maskCordao.style.maskImage = "url('cordao_vertical_mascara.png')";
+                
+                // Alinhamento reto para o modelo vertical
+                previewLogo.style.top = "52%";
+                previewLogo.style.left = "50%";
+                previewLogo.style.transform = "translate(-50%, -50%)"; 
+                previewLogo.style.maxWidth = "35%";
+                previewLogo.style.maxHeight = "35%";
             } else {
-                pixels[i+3] = 0; // Apaga o restante do corpo do canvas auxiliar
+                imgBase.src = 'horizontal-sacola-branca.png';
+                
+                maskSacola.style.webkitMaskImage = "url('horizontal-sacola-mascara.png')";
+                maskSacola.style.maskImage = "url('horizontal-sacola-mascara.png')";
+                
+                maskCordao.style.webkitMaskImage = "url('horizontal-cordao-mascara.png')";
+                maskCordao.style.maskImage = "url('horizontal-cordao-mascara.png')";
+                
+                // Alinhamento tridimensional para o modelo horizontal enviado
+                previewLogo.style.top = "50%"; 
+                previewLogo.style.left = "54%"; 
+                previewLogo.style.transform = "translate(-50%, -50%) rotate(-1.5deg) skewY(-1.5deg)";
+                previewLogo.style.maxWidth = "38%";
+                previewLogo.style.maxHeight = "25%";
             }
+
+            maskSacola.style.backgroundColor = corSacolaHex;
+            maskCordao.style.backgroundColor = corCordaoHex;
         }
-        ctxAlca.putImageData(alcaData, 0, 0);
-        ctx.drawImage(canvasAlca, 0, 0);
 
-    } catch (e) {
-        console.warn("Gerando mockup no modo vetorial padrão.");
-    }
+        // Evento para renderizar a logo carregada instantaneamente
+        elInputLogo.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                elFileText.textContent = this.files[0].name;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewLogo.src = e.target.result;
+                    previewLogo.style.display = 'block';
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
 
-    // Texto de especificação técnica de gravação
-    ctx.fillStyle = "#475569"; ctx.font = "bold 11px Arial"; ctx.textAlign = "right";
-    let textoEspecificacao = numCores === 'cromia' ? "GRAVAÇÃO: CROMIA ( PAPEL )" : `GRAVAÇÃO: ${numCores} COR(ES) SEGUINDO O PADRÃO DA LOGO`;
-    ctx.fillText(textoEspecificacao, 580, 580);
+        // Escuta os seletores
+        elModelo.addEventListener('change', atualizarMockup);
+        elCorSacola.addEventListener('change', atualizarMockup);
+        elCorCordao.addEventListener('change', atualizarMockup);
+        // Função de captura de tela e download do arquivo PNG
+        elForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = elForm.querySelector('.btn-submit');
+            const textoOriginal = submitBtn.textContent;
+            submitBtn.textContent = "Processando...";
+            submitBtn.disabled = true;
 
-    // Prepara e exibe o botão de download
-    const btnBaixar = document.getElementById('btnBaixarImage');
-    btnBaixar.href = canvas.toDataURL("image/png");
-    btnBaixar.style.display = 'inline-block';
-}
-</script>
+            html2canvas(mockupContainer, {
+                backgroundColor: null, 
+                useCORS: true,        
+                scale: 2              
+            }).then(canvas => {
+                const image = canvas.toDataURL("image/png");
+                
+                const link = document.createElement('a');
+                const nomeModelo = elModelo.value;
+                link.download = `mockup-sacola-${nomeModelo}.png`;
+                link.href = image;
+                link.click();
+
+                submitBtn.textContent = textoOriginal;
+                submitBtn.disabled = false;
+            }).catch(error => {
+                console.error("Erro ao gerar a imagem:", error);
+                submitBtn.textContent = textoOriginal;
+                submitBtn.disabled = false;
+                alert("Ocorreu um erro. Certifique-se de que os arquivos de imagem estão na mesma pasta na raiz.");
+            });
+        });
+
+        window.addEventListener('DOMContentLoaded', atualizarMockup);
+    </script>
 </body>
 </html>
