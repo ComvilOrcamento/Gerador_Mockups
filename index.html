@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup - Sistema de Camadas Seguro</title>
+    <title>Gerador de Mockup - Movimentação Livre da Logo</title>
     <style>
         * {
             margin: 0;
@@ -133,20 +133,12 @@
             transition: all 0.1s ease-in-out;
         }
 
-        .cordao-box:hover {
-            transform: scale(1.1);
-            border-color: #64748b;
-        }
-
-        .cordao-box.active {
-            border-color: #003366;
-            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15);
-        }
-
+        .cordao-box:hover { transform: scale(1.1); border-color: #64748b; }
+        .cordao-box.active { border-color: #003366; box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15); }
         .cordao-box[style*="#ffffff"] { border-color: #e2e8f0; }
         .cordao-box[style*="#ffffff"].active { border-color: #003366; }
 
-        /* Botão de Upload Avançado */
+        /* Botão de Upload */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -186,13 +178,14 @@
             text-overflow: ellipsis;
         }
 
-        /* Quadro de Visualização Fluido */
+        /* Quadro de Visualização */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
             flex-grow: 1;
             padding: 25px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
@@ -208,6 +201,7 @@
             border-radius: 6px;
             border: 1px solid #e0e0e0;
             padding: 10px;
+            position: relative;
         }
 
         canvas {
@@ -215,6 +209,13 @@
             height: auto !important;
             object-fit: contain;
             display: block;
+        }
+
+        .hint-text {
+            font-size: 11px;
+            color: #888888;
+            margin-top: 10px;
+            font-weight: 500;
         }
 
         @media (max-width: 768px) {
@@ -266,6 +267,7 @@
             <div class="preview-box">
                 <canvas id="mockupCanvas"></canvas>
             </div>
+            <span class="hint-text">💡 Clique e arraste o logotipo com o mouse para reposicionar</span>
         </div>
     </div>
     <!-- LOGICA JAVASCRIPT CORRIGIDA -->
@@ -288,6 +290,17 @@
         let modoKraftAtivo = false;
         let logoCarregada = false;
         let corCordaoSelecionada = "#ffffff"; 
+
+        // VARIÁVEIS DE MOVIMENTAÇÃO DA LOGO
+        let logoX = 0; // Coordenada X (Será definida dinamicamente com base no centro da imagem)
+        let logoY = 0; // Coordenada Y
+        let arrastandoLogo = false;
+        let offsetMouseX = 0;
+        let offsetMouseY = 0;
+        
+        // Armazena as dimensões calculadas da logo para o detector do clique do mouse
+        let logoAtualWidth = 0;
+        let logoAtualHeight = 0;
 
         const mostruarioCordao = [
             { nome: "Branco", hex: "#ffffff" }, { nome: "Preto", hex: "#1a1a1a" },
@@ -339,11 +352,10 @@
             return buffer;
         }
 
-        // MONTAGEM DO MOCKUP COM LOGO A 35% E EMPILHAMENTO DE CAMADAS REAIS
+        // PROCESSADOR CENTRAL COM PROFUNDIDADE 3D E COORDENADAS REPOSICIONÁVEIS
         function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
-            // Bloqueia qualquer redimensionamento do arquivo de imagem base original
             canvas.width = imgSombra.naturalWidth;
             canvas.height = imgSombra.naturalHeight;
 
@@ -358,22 +370,32 @@
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // CAMADA 2: LOGOTIPO DO CLIENTE (Ocupa rigorosamente 35% do espaço horizontal)
+            // CAMADA 2: LOGOTIPO DO CLIENTE (Com profundidade 3D e coordenadas móveis)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
                 
-                // Centralização perfeita e ajustada
-                ctx.translate(canvas.width * 0.50, canvas.height * 0.53);
+                // Move para a posição atual que o usuário arrastou com o mouse
+                ctx.translate(logoX, logoY);
                 
-                // REQUISITO: Ocupa exatamente 35% da largura original da sacola
-                let larguraLogo = canvas.width * 0.35;
-                let alturaLogo = (imgLogo.naturalHeight / imgLogo.naturalWidth) * larguraLogo;
+                // REQUISITO: Tamanho fixo de proporção equivalente a 35% do espaço
+                logoAtualWidth = canvas.width * 0.35;
+                logoAtualHeight = (imgLogo.naturalHeight / imgLogo.naturalWidth) * logoAtualWidth;
                 
-                ctx.drawImage(imgLogo, -larguraLogo / 2, -alturaLogo / 2, larguraLogo, alturaLogo);
+                // EFEITO DE PROFUNDIDADE DA ESQUERDA PARA A DIREITA:
+                // Aplica uma leve inclinação e rotação tridimensional acompanhando o plano físico da foto enviada
+                if (elModelo.value === 'horizontal') {
+                    ctx.rotate(-1.8 * Math.PI / 180);
+                    ctx.transform(1, -0.026, 0, 1, 0, 0); // Efeito Skew/Estiramento que dá a sensação de perspectiva profunda
+                } else {
+                    ctx.rotate(-0.8 * Math.PI / 180);
+                    ctx.transform(1, -0.012, 0, 1, 0, 0); // Profundidade sutil na vertical
+                }
+                
+                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
-            // CAMADA 3: Tingimento das Alças (Passa por cima das rebarbas da logo)
+            // CAMADA 3: Tingimento das Alças (Passa por cima da logo)
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
@@ -385,6 +407,18 @@
             ctx.drawImage(imgSombra, 0, 0);
             ctx.restore();
         }
+        // Define as posições centrais padrão iniciais de fábrica quando o modelo muda
+        function resetarPosicaoLogoPadrao() {
+            if (!imgSombra.naturalWidth) return;
+            if (elModelo.value === 'horizontal') {
+                logoX = imgSombra.naturalWidth * 0.48;
+                logoY = imgSombra.naturalHeight * 0.54;
+            } else {
+                logoX = imgSombra.naturalWidth * 0.50;
+                logoY = imgSombra.naturalHeight * 0.53;
+            }
+        }
+
         function carregarArquivosDoServidor() {
             const sentido = elModelo.value;
             let carregadas = 0;
@@ -392,6 +426,7 @@
             function verificarPronto() {
                 carregadas++;
                 if (carregadas === 3) {
+                    resetarPosicaoLogoPadrao();
                     processarETingirMockup();
                 }
             }
@@ -409,23 +444,77 @@
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
-        // SISTEMA DE UPLOAD CORRIGIDO: Injeção por URL.createObjectURL (Blindado contra falhas e quebras)
+        // SISTEMA DE UPLOAD VIA BLOB SEGURO
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 const arquivo = e.target.files[0];
                 elFileText.textContent = arquivo.name;
 
-                // Cria um link interno ultra veloz nativo do navegador para o arquivo
                 const blobURL = URL.createObjectURL(arquivo);
                 
                 imgLogo.onload = function() {
                     logoCarregada = true;
-                    processarETingirMockup(); // Renderiza instantaneamente
+                    resetarPosicaoLogoPadrao();
+                    processarETingirMockup();
                 };
                 imgLogo.src = blobURL;
             }
         });
 
+        // DETECTORES DE MOUSE PARA ARRASTAR A LOGO
+        function obterCoordenadasMouse(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Converte a posição da tela proporcionalmente para os pixels originais reais do Canvas
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            return { x, y };
+        }
+
+        canvas.addEventListener('mousedown', function(e) {
+            if (!logoCarregada) return;
+            
+            const mouse = obterCoordenadasMouse(e);
+            
+            // Verifica de forma geométrica se o clique do usuário foi dentro do quadrado da logo
+            if (mouse.x >= logoX - logoAtualWidth/2 && mouse.x <= logoX + logoAtualWidth/2 &&
+                mouse.y >= logoY - logoAtualHeight/2 && mouse.y <= logoY + logoAtualHeight/2) {
+                
+                arrastandoLogo = true;
+                offsetMouseX = mouse.x - logoX;
+                offsetMouseY = mouse.y - logoY;
+                canvas.style.cursor = "grabbing";
+            }
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (!logoCarregada) return;
+            
+            const mouse = obterCoordenadasMouse(e);
+
+            if (arrastandoLogo) {
+                // Atualiza a posição mantendo o offset do clique inicial
+                logoX = mouse.x - offsetMouseX;
+                logoY = mouse.y - offsetMouseY;
+                processarETingirMockup(); // Redesenha tudo imediatamente enquanto arrasta
+            } else {
+                // Muda o cursor para "mãozinha" se passar o mouse em cima da logo
+                if (mouse.x >= logoX - logoAtualWidth/2 && mouse.x <= logoX + logoAtualWidth/2 &&
+                    mouse.y >= logoY - logoAtualHeight/2 && mouse.y <= logoY + logoAtualHeight/2) {
+                    canvas.style.cursor = "pointer";
+                } else {
+                    canvas.style.cursor = "default";
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (arrastandoLogo) {
+                arrastandoLogo = false;
+                canvas.style.cursor = "default";
+            }
+        });
+
+        // Controles auxiliares dos botões e menus
         elBtnKraft.addEventListener('click', function() {
             modoKraftAtivo = !modoKraftAtivo;
             if (modoKraftAtivo) this.classList.add('active');
