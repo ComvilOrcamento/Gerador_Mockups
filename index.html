@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup - Estúdio Premium Corrigido</title>
+    <title>Gerador de Mockup - Estúdio Premium</title>
     <style>
         * {
             margin: 0;
@@ -78,7 +78,6 @@
             background-size: 14px;
         }
 
-        /* Estrutura Tripla de Divisão de Cores */
         .papel-triplo-wrapper {
             display: flex;
             gap: 10px;
@@ -153,7 +152,7 @@
         .cordao-box:hover { transform: scale(1.1); border-color: #64748b; }
         .cordao-box.active { border-color: #003366; box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15); }
 
-        /* Sliders deslizantes */
+        /* Sliders */
         input[type="range"] {
             width: 100%;
             height: 6px;
@@ -204,7 +203,30 @@
             text-overflow: ellipsis;
         }
 
-        /* Quadro de Visualização Direito */
+        /* Botão Descarregar Layout */
+        .btn-download {
+            width: 100%;
+            background-color: #003366;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-download:hover {
+            background-color: #002244;
+        }
+
+        /* Quadro de Visualização Direito com Sombras Fina */
         .preview-container {
             flex-grow: 1;
             padding: 10px;
@@ -252,65 +274,55 @@
 <body>
 
     <div class="container">
+        <!-- Painel Lateral -->
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
-            <div class="form-group">
-                <label for="modelo">Variação *</label>
-                <select id="modelo">
-                    <option value="vertical">Vertical</option>
-                    <option value="horizontal">Horizontal</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Configuração da Cor de Papel *</label>
-                <div class="papel-triplo-wrapper">
-                    <div class="picker-container">
-                        <span class="picker-label">Frente</span>
-                        <input type="color" id="cor-frente" value="#ffffff">
-                    </div>
-                    <div class="picker-container">
-                        <span class="picker-label">Lateral</span>
-                        <input type="color" id="cor-lateral" value="#ffffff">
-                    </div>
-                    <button type="button" id="btnKraft" class="btn-kraft">Kraft</button>
+            <form id="mockupForm">
+                <div class="form-group">
+                    <label for="modelo">Variação *</label>
+                    <select id="modelo">
+                        <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
+                    </select>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Cor de Cordão (Mostruário P.P.) *</label>
-                <div class="cordao-grid" id="cordaoGrid"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Logotipo do Cliente (PNG Transparente) *</label>
-                <div class="file-input-wrapper">
-                    <button type="button" class="btn-file">Escolher ficheiro</button>
-                    <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
-                    <input type="file" id="logo" accept="image/png">
+                <div class="form-group">
+                    <label>Configuração da Cor de Papel *</label>
+                    <div class="papel-triplo-wrapper">
+                        <div class="picker-container">
+                            <span class="picker-label">Frente</span>
+                            <input type="color" id="cor-frente" value="#ffffff">
+                        </div>
+                        <div class="picker-container">
+                            <span class="picker-label">Lateral</span>
+                            <input type="color" id="cor-lateral" value="#ffffff">
+                        </div>
+                        <button type="button" id="btnKraft" class="btn-kraft">Kraft</button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="logo-zoom">Tamanho do Logotipo (Zoom)</label>
-                <input type="range" id="logo-zoom" min="10" max="70" value="35">
-            </div>
+                <div class="form-group">
+                    <label>Cor de Cordão (Mostruário P.P.) *</label>
+                    <div class="cordao-grid" id="cordaoGrid"></div>
+                </div>
 
-            <div class="form-group">
-                <label for="logo-giro">Giro do Logotipo (Rotação)</label>
-                <input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5">
-            </div>
-        </div>
+                <div class="form-group">
+                    <label>Logotipo do Cliente (PNG Transparente) *</label>
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn-file">Escolher ficheiro</button>
+                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                        <input type="file" id="logo" accept="image/png">
+                    </div>
+                </div>
 
-        <div class="preview-container">
-            <div class="preview-box">
-                <canvas id="mockupCanvas"></canvas>
-            </div>
-            <span class="hint-text">💡 Arraste com o mouse para mover / Use as barras para zoom e giro</span>
-        </div>
-    </div>
-    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
+                <div class="form-group">
+                    <label for="logo-zoom">Tamanho do Logotipo (Zoom)</label>
+                    <input type="range" id="logo-zoom" min="10" max="70" value="35">
+                </div>
+
+                <div class="form-group">
+<!-- LOGICA JAVASCRIPT CORRIGIDA -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -325,6 +337,7 @@
         
         const elLogoZoom = document.getElementById('logo-zoom');
         const elLogoGiro = document.getElementById('logo-giro');
+        const elForm = document.getElementById('mockupForm');
 
         let imgBase = new Image();       
         let imgFrente = new Image();     
@@ -395,7 +408,7 @@
             return buffer;
         }
 
-        // MOTOR DE PROCESSAMENTO CORRIGIDO E SEGURO CONTRA FALHAS DE CARREGAMENTO DA LOGO
+        // PROCESSO ESTRETO DE CAMADAS + PROFUNDIDADE DIREITA ACENTUADA
         function processarETingirMockup() {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
@@ -404,21 +417,21 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // CAMADA 1A: Frente
+            // CAMADA 1A: Frente (sacola_X_frente.png)
             if (imgFrente.complete) {
                 const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
                 const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
                 ctx.drawImage(camadaFrente, 0, 0);
             }
 
-            // CAMADA 1B: Lateral
+            // CAMADA 1B: Lateral (sacola_X_lateral.png)
             if (imgLateral.complete) {
                 const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
                 const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // CAMADA 2: LOGOTIPO DO CLIENTE (Corrigido para aguardar o carregamento e respeitar o empilhamento)
+            // CAMADA 2: LOGOTIPO DO CLIENTE (Com profundidade acentuada para o lado direito)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
@@ -430,25 +443,26 @@
                 
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 
+                // Aplica a perspectiva tridimensional forte (Lado direito vai encolhendo)
                 if (elModelo.value === 'horizontal') {
                     ctx.rotate((-1.8 * Math.PI / 180) + giroManualRad);
-                    ctx.transform(1, 0.035, 0, 1, 0, 0); 
+                    ctx.transform(1, 0.058, 0, 1, 0, 0); 
                 } else {
                     ctx.rotate((-0.8 * Math.PI / 180) + giroManualRad);
-                    ctx.transform(1, 0.015, 0, 1, 0, 0); 
+                    ctx.transform(1, 0.024, 0, 1, 0, 0); 
                 }
                 
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
-            // CAMADA 3: Cordões
+            // CAMADA 3: Cordões (sacola_X_cordao.png)
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // CAMADA 4: Sombra Fotográfica por Cima de tudo
+            // CAMADA 4: Sombra Fotográfica por Cima de tudo (sacola_X_base.png)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0);
@@ -487,13 +501,14 @@
             imgLateral.onload = verificarPronto;
             imgCordao.onload = verificarPronto;
 
+            // Busca os arquivos direto na raiz seguindo sua nomenclatura oficial
             imgBase.src = `sacola_${sentido}_base.png`;
             imgFrente.src = `sacola_${sentido}_frente.png`;
             imgLateral.src = `sacola_${sentido}_lateral.png`;
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
-        // CORREÇÃO ESTRUTURAL DO UPLOAD: Monitoramento e validação completa do arquivo em tempo de execução
+        // SISTEMA DE UPLOAD BLINDADO CONTRA CONFLITOS DE ARQUIVO
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 const file = e.target.files[0];
@@ -501,16 +516,14 @@
 
                 const blobURL = URL.createObjectURL(file);
                 
-                // Força o reset de estados do objeto de imagem antes de atribuir a nova fonte
                 logoCarregada = false;
                 imgLogo = new Image(); 
                 
                 imgLogo.onload = function() {
                     logoCarregada = true;
                     resetarPosicaoLogoPadrao();
-                    processarETingirMockup(); // Renderiza com segurança
+                    processarETingirMockup();
                 };
-                
                 imgLogo.src = blobURL;
             }
         });
@@ -570,8 +583,17 @@
         
         elLogoZoom.addEventListener('input', processarETingirMockup);
         elLogoGiro.addEventListener('input', processarETingirMockup);
-
         elModelo.addEventListener('change', carregarArquivosDoServidor);
+
+        // FUNÇÃO DE DOWNLOAD DO LAYOUT EM ALTA RESOLUÇÃO NATIVA
+        elForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const link = document.createElement('a');
+            const sentido = elModelo.value;
+            link.download = `mockup-layout-${sentido}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        });
 
         window.addEventListener('DOMContentLoaded', () => {
             renderizarGradeCordoes();
@@ -580,3 +602,4 @@
     </script>
 </body>
 </html>
+        
