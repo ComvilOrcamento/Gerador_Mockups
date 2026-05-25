@@ -354,6 +354,7 @@
             }
         }
         // Troca os arquivos de imagem imediatamente ao mudar no campo Variação e deixa fixo
+        // Troca os arquivos de imagem imediatamente ao mudar no campo Variação e deixa fixo
         function carregarArquivosEAtualizar() {
             const modelo = elModelo.value;
             let carregadas = 0;
@@ -364,6 +365,11 @@
                     processarEMostrarMockup();
                 }
             }
+
+            // ATENÇÃO: Liberação de segurança CORS para o Canvas aceitar desenhar os arquivos
+            imgBase.crossOrigin = "anonymous";
+            imgMaskSacola.crossOrigin = "anonymous";
+            imgMaskCordao.crossOrigin = "anonymous";
 
             imgBase.onload = verificarPronto;
             imgMaskSacola.onload = verificarPronto;
@@ -382,15 +388,15 @@
 
         // Escuta os uploads de logotipo do usuário
         elInputLogo.addEventListener('change', function() {
-            if (this.files && this.files) {
-                elFileText.textContent = this.files.name;
+            if (this.files && this.files[0]) {
+                elFileText.textContent = this.files[0].name;
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     htmlLogoOverlay.src = e.target.result;
                     logoCarregada = true;
                     processarEMostrarMockup(); // Atualiza a logo em tempo real na tela
                 };
-                reader.readAsDataURL(this.files);
+                reader.readAsDataURL(this.files[0]);
             }
         });
 
