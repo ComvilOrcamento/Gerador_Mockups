@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Painel Otimizado</title>
+    <title>Gerador de Mockup - Sistema de Camadas Seguro</title>
     <style>
         * {
             margin: 0;
@@ -78,11 +78,6 @@
             background-size: 14px;
         }
 
-        select:focus {
-            border-color: #003366;
-        }
-
-        /* Divisão 50/50 Cor Papel e Botão Kraft */
         .color-picker-wrapper {
             display: flex;
             gap: 10px;
@@ -93,7 +88,7 @@
         input[type="color"] {
             -webkit-appearance: none;
             border: 1px solid #cccccc;
-            width: 50%; /* Ocupa metade do espaço */
+            width: 50%;
             height: 42px;
             border-radius: 6px;
             cursor: pointer;
@@ -105,7 +100,7 @@
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
         .btn-kraft {
-            width: 50%; /* Ocupa a outra metade do espaço */
+            width: 50%;
             height: 42px;
             background-color: #c2a67a;
             color: #ffffff;
@@ -114,16 +109,15 @@
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
         }
 
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Grid Compacto de Cordão para caber em exatamente 3 Linhas */
+        /* Grid de Cordão em 3 Linhas */
         .cordao-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr); /* 7 colunas geram 3 linhas perfeitas para 21 cores */
+            grid-template-columns: repeat(7, 1fr);
             gap: 6px;
             background-color: #f8fafc;
             padding: 10px;
@@ -152,7 +146,7 @@
         .cordao-box[style*="#ffffff"] { border-color: #e2e8f0; }
         .cordao-box[style*="#ffffff"].active { border-color: #003366; }
 
-        /* Botão de Upload */
+        /* Botão de Upload Avançado */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -192,7 +186,7 @@
             text-overflow: ellipsis;
         }
 
-        /* Quadro de Visualização Original */
+        /* Quadro de Visualização Fluido */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -232,10 +226,10 @@
 <body>
 
     <div class="container">
+        <!-- Painel Lateral -->
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
-            <!-- 1. Variação -->
             <div class="form-group">
                 <label for="modelo">Variação *</label>
                 <select id="modelo">
@@ -244,7 +238,6 @@
                 </select>
             </div>
 
-            <!-- 2. Cor do Papel (Dividido 50/50) -->
             <div class="form-group">
                 <label>Cor de Papel *</label>
                 <div class="color-picker-wrapper">
@@ -253,13 +246,11 @@
                 </div>
             </div>
 
-            <!-- 3. Cor do Cordão (3 Linhas de Quadradinhos) -->
             <div class="form-group">
                 <label>Cor de Cordão (Mostruário P.P.) *</label>
                 <div class="cordao-grid" id="cordaoGrid"></div>
             </div>
 
-            <!-- 4. Upload do Logotipo -->
             <div class="form-group">
                 <label>Logotipo do Cliente (PNG Transparente) *</label>
                 <div class="file-input-wrapper">
@@ -270,6 +261,7 @@
             </div>
         </div>
 
+        <!-- Área de Exibição -->
         <div class="preview-container">
             <div class="preview-box">
                 <canvas id="mockupCanvas"></canvas>
@@ -347,44 +339,47 @@
             return buffer;
         }
 
-        // MONTAGEM CORRIGIDA: TAMANHO FIXO ORIGINAL + ORDEM ESTRETA DE CAMADAS
+        // MONTAGEM DO MOCKUP COM LOGO A 35% E EMPILHAMENTO DE CAMADAS REAIS
         function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
+            // Bloqueia qualquer redimensionamento do arquivo de imagem base original
             canvas.width = imgSombra.naturalWidth;
             canvas.height = imgSombra.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // CAMADA 1: Pintura da Cor do Papel
+            // CAMADA 1: Tingimento do Papel
             if (imgBase.complete) {
                 const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
                 const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // CAMADA 2: LOGOTIPO DO CLIENTE (Aplicada por cima da cor da sacola e por baixo do cordão/sombra)
+            // CAMADA 2: LOGOTIPO DO CLIENTE (Ocupa rigorosamente 35% do espaço horizontal)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
+                
+                // Centralização perfeita e ajustada
                 ctx.translate(canvas.width * 0.50, canvas.height * 0.53);
                 
+                // REQUISITO: Ocupa exatamente 35% da largura original da sacola
                 let larguraLogo = canvas.width * 0.35;
-                let alturaLogo = (imgLogo.height / imgLogo.width) * larguraLogo;
+                let alturaLogo = (imgLogo.naturalHeight / imgLogo.naturalWidth) * larguraLogo;
                 
                 ctx.drawImage(imgLogo, -larguraLogo / 2, -alturaLogo / 2, larguraLogo, alturaLogo);
                 ctx.restore();
             }
 
-            // CAMADA 3: Pintura da Cor Sólida do Cordão (Passa por cima das rebarbas da logo)
+            // CAMADA 3: Tingimento das Alças (Passa por cima das rebarbas da logo)
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // CAMADA 4: MULTIPLICAÇÃO DAS SOMBRAS POR CIMA DE TUDO (Une as peças e dobras de forma real)
+            // CAMADA 4: MULTIPLICAÇÃO DAS SOMBRAS GLOBAIS POR CIMA
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgSombra, 0, 0);
@@ -414,19 +409,20 @@
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
-        // Upload via FileReader nativo injetado diretamente no motor do Canvas
-        elInputLogo.addEventListener('change', function() {
-            if (this.files && this.files) {
-                elFileText.textContent = this.files.name;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imgLogo.onload = function() {
-                        logoCarregada = true;
-                        processarETingirMockup();
-                    };
-                    imgLogo.src = e.target.result;
+        // SISTEMA DE UPLOAD CORRIGIDO: Injeção por URL.createObjectURL (Blindado contra falhas e quebras)
+        elInputLogo.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const arquivo = e.target.files[0];
+                elFileText.textContent = arquivo.name;
+
+                // Cria um link interno ultra veloz nativo do navegador para o arquivo
+                const blobURL = URL.createObjectURL(arquivo);
+                
+                imgLogo.onload = function() {
+                    logoCarregada = true;
+                    processarETingirMockup(); // Renderiza instantaneamente
                 };
-                reader.readAsDataURL(this.files);
+                imgLogo.src = blobURL;
             }
         });
 
