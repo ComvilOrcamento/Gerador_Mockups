@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Mockup Realista</title>
+    <title>Gerador de Mockup Realista Fotográfico</title>
     <style>
         * {
             margin: 0;
@@ -76,11 +76,6 @@
             background-size: 14px;
         }
 
-        select:focus {
-            border-color: #003366;
-        }
-
-        /* Botão de Upload Personalizado (Agora no Topo) */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -157,7 +152,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #f9f9f9;
+            background-color: #e2e8f0;
         }
 
         canvas {
@@ -175,13 +170,11 @@
 <body>
 
     <div class="container">
-        <!-- Formulário Lateral Esquerdo -->
         <div class="form-container">
             <h2>Mockup Corrigido 3D</h2>
             
             <form id="mockupForm">
-                
-                <!-- 1. Upload de Arquivo (Subiu para a primeira opção) -->
+                <!-- 1. Upload no topo -->
                 <div class="form-group">
                     <label>Logotipo do Cliente (PNG Transparente) *</label>
                     <div class="file-input-wrapper">
@@ -195,12 +188,12 @@
                 <div class="form-group">
                     <label for="modelo">Variação *</label>
                     <select id="modelo" required>
-                        <option value="vertical">Vertical</option>
                         <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
                     </select>
                 </div>
 
-                <!-- 3. Cor da Sacola/Papel -->
+                <!-- 3. Cor do Papel -->
                 <div class="form-group">
                     <label for="cor-papel">Cor de Papel *</label>
                     <select id="cor-papel" required>
@@ -238,14 +231,13 @@
             </form>
         </div>
 
-        <!-- Área do Visualizador Direita -->
         <div class="preview-container">
             <div class="preview-box">
-                <canvas id="mockupCanvas" width="800" height="800"></canvas>
+                <canvas id="mockupCanvas" width="1000" height="1000"></canvas>
             </div>
         </div>
     </div>
-    <!-- LOGICA JAVASCRIPT -->
+    <!-- LOGICA JAVASCRIPT CORRIGIDA -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -257,76 +249,89 @@
         const elFileText = document.getElementById('file-text');
         const elForm = document.getElementById('mockupForm');
 
-        // Objetos de imagem nativos
         let imgBase = new Image();
         let imgMaskSacola = new Image();
         let imgMaskCordao = new Image();
         let imgLogoClient = new Image();
         let logoCarregada = false;
 
-        // Fundo neutro padrão inicial do canvas
-        ctx.fillStyle = "#f0f0f0";
+        // Fundo neutro de estúdio
+        ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Função auxiliar que isola a cor dentro da silhueta da máscara
-        function criarCamadaColorida(imgMascara, corHex) {
-            const buffer = document.createElement('canvas');
-            buffer.width = canvas.width;
-            buffer.height = canvas.height;
-            const bCtx = buffer.getContext('2d');
-
-            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
-                bCtx.drawImage(imgMascara, 0, 0, buffer.width, buffer.height);
-                bCtx.globalCompositeOperation = 'source-in';
-                bCtx.fillStyle = corHex;
-                bCtx.fillRect(0, 0, buffer.width, buffer.height);
-            }
-            return buffer;
-        }
-
-        // Função de montagem que mistura as cores, sombras e a logo com tamanho fixo automático
+        // Renderizador avançado com mesclagem fotográfica baseada na foto enviada
         function processarEMostrarMockup() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.globalCompositeOperation = 'source-over';
+            
+            // Fundo cinza claro idêntico ao cenário da foto enviada
+            ctx.fillStyle = "#f5f5f7";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Aplica a cor do Papel através da máscara de sacola
-            if (imgMaskSacola.complete) {
-                const camadaPapel = criarCamadaColorida(imgMaskSacola, elCorPapel.value);
-                ctx.drawImage(camadaPapel, 0, 0);
+            // 1. PRIMEIRA ETAPA: Mesclagem do papel usando Hard-Light para reter brilhos e luzes reais
+            if (imgMaskSacola.complete && imgBase.complete) {
+                const bufferPapel = document.createElement('canvas');
+                bufferPapel.width = canvas.width;
+                bufferPapel.height = canvas.height;
+                const pCtx = bufferPapel.getContext('2d');
+
+                // Recorta a cor exata dentro do papel da sacola
+                pCtx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
+                pCtx.globalCompositeOperation = 'source-in';
+                pCtx.fillStyle = elCorPapel.value;
+                pCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Aplica a textura da foto real por cima usando hard-light
+                pCtx.globalCompositeOperation = 'hard-light';
+                pCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+
+                // Desenha o resultado pronto no quadro visível
+                ctx.drawImage(bufferPapel, 0, 0);
             }
 
-            // 2. Aplica a cor do Cordão através da máscara de cordão
+            // 2. SEGUNDA ETAPA: Pintura e iluminação do Cordão
             if (imgMaskCordao.complete) {
-                const camadaCordao = criarCamadaColorida(imgMaskCordao, elCorCordao.value);
-                ctx.drawImage(camadaCordao, 0, 0);
+                const bufferCordao = document.createElement('canvas');
+                bufferCordao.width = canvas.width;
+                bufferCordao.height = canvas.height;
+                const cCtx = bufferCordao.getContext('2d');
+
+                cCtx.drawImage(imgMaskCordao, 0, 0, canvas.width, canvas.height);
+                cCtx.globalCompositeOperation = 'source-in';
+                cCtx.fillStyle = elCorCordao.value;
+                cCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+                cCtx.globalCompositeOperation = 'multiply';
+                cCtx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+
+                ctx.drawImage(bufferCordao, 0, 0);
             }
 
-            // 3. Aplica a Foto de Base com as Sombras Reais multiplicando por cima
-            if (imgBase.complete) {
-                ctx.save();
-                ctx.globalCompositeOperation = 'multiply';
-                ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
-            }
+            // 3. TERCEIRA ETAPA: Aplicação das sombras do cenário (chão e fundo da foto)
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
 
-            // 4. Aplica a Logomarca Centralizada com Tamanho Padrão Automático Fixo
+            // 4. QUARTA ETAPA: Inserção do Logotipo respeitando a perspectiva real da foto
             if (logoCarregada && imgLogoClient.complete) {
                 ctx.save();
                 
-                if (elModelo.value === 'vertical') {
-                    // Centralização padrão vertical
-                    ctx.translate(canvas.width * 0.50, canvas.height * 0.52);
+                if (elModelo.value === 'horizontal') {
+                    // Eixos calibrados especificamente para a face da sacola horizontal da foto
+                    ctx.translate(canvas.width * 0.48, canvas.height * 0.54);
                     
-                    // Tamanho automático fixado de forma proporcional (35% da largura da sacola)
-                    let larguraLogo = canvas.width * 0.35;
-                    let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
-                    ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
-                } else {
-                    // Centralização e inclinação em perspectiva para a horizontal
-                    ctx.translate(canvas.width * 0.54, canvas.height * 0.50);
-                    ctx.rotate(-1.5 * Math.PI / 180);
+                    // Rotação e inclinação vertical (Skew) para deitar a logo sobre o papel em perspectiva
+                    ctx.rotate(-1.8 * Math.PI / 180);
                     ctx.transform(1, -0.026, 0, 1, 0, 0);
                     
+                    // Tamanho seguro automático idêntico à proporção da sacola "Sarah Flor" da foto
+                    let larguraLogo = canvas.width * 0.52;
+                    let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
+                    
+                    ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
+                } else {
+                    // Posicionamento padrão para o modelo Vertical
+                    ctx.translate(canvas.width * 0.50, canvas.height * 0.55);
                     let larguraLogo = canvas.width * 0.38;
                     let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
                     ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
@@ -334,35 +339,33 @@
                 ctx.restore();
             }
         }
-        // Disparado quando o usuário escolhe o arquivo de logotipo
         elInputLogo.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                elFileText.textContent = this.files[0].name;
+            if (this.files && this.files) {
+                elFileText.textContent = this.files.name;
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     imgLogoClient.src = e.target.result;
                     logoCarregada = true;
                 };
-                reader.readAsDataURL(this.files[0]);
+                reader.readAsDataURL(this.files);
             }
         });
 
-        // O BOTÃO GERAR: Só carrega os arquivos fornecidos e processa tudo ao ser clicado
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
             if (!logoCarregada) {
-                alert("Por favor, selecione o arquivo de logotipo primeiro.");
+                alert("Por favor, selecione o logotipo antes de gerar o mockup.");
                 return;
             }
 
             const submitBtn = elForm.querySelector('.btn-submit');
-            submitBtn.textContent = "Gerando Mockup...";
+            submitBtn.textContent = "Processando...";
             submitBtn.disabled = true;
 
             const modelo = elModelo.value;
 
-            // Mapeamento dos arquivos na raiz conforme suas especificações oficiais
+            // Busca os arquivos direto na raiz do servidor
             if (modelo === 'vertical') {
                 imgBase.src = 'sacola_vertical_base.png';
                 imgMaskSacola.src = 'sacola_vertical_mascara.png';
@@ -373,7 +376,6 @@
                 imgMaskCordao.src = 'horizontal-cordao-mascara.png';
             }
 
-            // Validador de carregamento assíncrono das imagens
             let imagensCarregadas = 0;
             function conferirCarregamento() {
                 imagensCarregadas++;
@@ -387,8 +389,7 @@
             imgBase.onload = conferirCarregamento;
             imgMaskSacola.onload = conferirCarregamento;
             imgMaskCordao.onload = conferirCarregamento;
-            
-            // Caso as imagens já estejam no cache do navegador, força a renderização direta
+
             if (imgBase.complete && imgMaskSacola.complete && imgMaskCordao.complete) {
                 processarEMostrarMockup();
                 submitBtn.textContent = "Gerar Imagem";
