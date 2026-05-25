@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Aplicação de Logo</title>
+    <title>Variações de Sacola - Cores Fortes P.P.</title>
     <style>
         * {
             margin: 0;
@@ -34,9 +34,11 @@
             background-color: #ffffff;
             padding: 30px 25px;
             border-radius: 8px;
-            width: 35%;
-            min-width: 320px;
+            width: 38%;
+            min-width: 340px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         h2 {
@@ -116,7 +118,7 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Botão Personalizado de Upload de Arquivo */
+        /* Botão de Upload */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -189,14 +191,13 @@
 
         @media (max-width: 768px) {
             .container { flex-direction: column; }
-            .form-container { width: 100%; }
+            .form-container { width: 100%; max-height: none; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Painel Lateral -->
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
@@ -218,13 +219,33 @@
                 </div>
             </div>
 
-            <!-- 3. Cor do Cordão -->
+            <!-- 3. Cor do Cordão (Mostruário de 19 Cores Fixas Baseado na Foto) -->
             <div class="form-group">
-                <label for="cor-cordao">Cor de Cordão *</label>
-                <input type="color" id="cor-cordao" value="#1a1a1a">
+                <label for="cor-cordao">Cor de Cordão (Mostruário P.P.) *</label>
+                <select id="cor-cordao">
+                    <option value="#8a8a8a">1 - Cinza Prata (Especial)</option>
+                    <option value="#001fb3">2 - Azul Anil (Especial)</option>
+                    <option value="#0047ab">3 - Azul Royal</option>
+                    <option value="#7ec8e3">4 - Azul BB (Especial)</option>
+                    <option value="#2e3b2e">5 - Verde Musgo</option>
+                    <option value="#007a5e">6 - Verde Cabaré</option>
+                    <option value="#005c29">7 - Verde Bandeira</option>
+                    <option value="#6bb343">8 - Verde Pistache (Especial)</option>
+                    <option value="#99cc33">9 - Verde Limão (Especial)</option>
+                    <option value="#8ee5c4">10 - Verde BB (Especial)</option>
+                    <option value="#4b0082">11 - Roxo (Especial)</option>
+                    <option value="#7f00ff">12 - Violeta (Especial)</option>
+                    <option value="#d11d5b">13 - Pink (Especial)</option>
+                    <option value="#fca1c1">14 - Rosa BB (Especial)</option>
+                    <option value="#ff4500">15 - Laranja (Especial)</option>
+                    <option value="#fae96c">16 - Amarelo BB (Especial)</option>
+                    <option value="#5c0632">17 - Vinho</option>
+                    <option value="#cfa076">18 - Bege</option>
+                    <option value="#8c7661">19 - Rami (Especial)</option>
+                </select>
             </div>
 
-            <!-- 4. Upload do Logotipo (Novo Campo Adicionado) -->
+            <!-- 4. Upload do Logotipo -->
             <div class="form-group">
                 <label>Logotipo do Cliente (PNG Transparente) *</label>
                 <div class="file-input-wrapper">
@@ -235,7 +256,6 @@
             </div>
         </div>
 
-        <!-- Área de Exibição -->
         <div class="preview-container">
             <div class="preview-box">
                 <canvas id="mockupCanvas"></canvas>
@@ -262,6 +282,7 @@
         let modoKraftAtivo = false;
         let logoCarregada = false;
 
+        // Função de corte geométrico rigoroso para criar cores 100% sólidas e intensas
         function criarCamadaColorida(imgMascara, corHex) {
             const buffer = document.createElement('canvas');
             buffer.width = canvas.width;
@@ -277,56 +298,51 @@
             return buffer;
         }
 
-        // Mistura as camadas mantendo as proporções originais e centralizando a logo
+        // Renderizador principal com opacidade total no papel e no cordão mapeado
         function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
-            // Mantém rigidamente a resolução nativa em pixels da sua imagem original
+            // Mantém rigidamente a resolução nativa original da imagem em pixels
             canvas.width = imgSombra.naturalWidth;
             canvas.height = imgSombra.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // Fundo neutro cinza claro
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 1. TINGIR O PAPEL (Cor Forte e Sólida)
+            // 1. APLICAR COR FORTE NO PAPEL
             if (imgBase.complete) {
                 const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
                 const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
                 ctx.drawImage(camadaPapel, 0, 0);
             }
 
-            // 2. TINGIR O CORDÃO
+            // 2. APLICAR COR FORTE NO CORDÃO (Mesma regra de opacidade total de preenchimento)
             if (imgCordao.complete) {
                 const camadaCordao = criarCamadaColorida(imgCordao, elCorCordao.value);
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 3. MULTIPLICAR AS SOMBRAS GLOBAIS POR CIMA
+            // 3. MULTIPLICAR AS SOMBRAS GLOBAIS POR CIMA (Realça dobras e o trançado do cordão sem desbotar)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgSombra, 0, 0);
             ctx.restore();
 
-            // 4. APLICAR LOGOTIPO DO CLIENTE (Perfeitamente Centralizado)
+            // 4. APLICAR LOGOTIPO DO CLIENTE CENTRALIZADO AUTOMÁTICO
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth !== 0) {
                 ctx.save();
-                
-                // Move o eixo de pintura para o centro matemático exato do Canvas da sacola
-                // (Eixo X: 50% / Eixo Y: 53% - levemente abaixo das alças para encaixe perfeito)
                 ctx.translate(canvas.width * 0.50, canvas.height * 0.53);
                 
-                // Calcula o tamanho da logo de forma proporcional (fixado em 35% da largura da sacola)
                 let larguraLogo = canvas.width * 0.35;
                 let alturaLogo = (imgLogo.height / imgLogo.width) * larguraLogo;
                 
-                // Desenha a imagem compensando metade do tamanho para que o centro da logo bata com o centro da sacola
                 ctx.drawImage(imgLogo, -larguraLogo / 2, -alturaLogo / 2, larguraLogo, alturaLogo);
                 ctx.restore();
             }
         }
-        // Puxa as imagens direto na raiz respeitando a nomenclatura padronizada
         function carregarArquivosDoServidor() {
             const sentido = elModelo.value;
             let carregadas = 0;
@@ -351,7 +367,6 @@
             imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
-        // Escuta o upload do logotipo do cliente e aplica na hora
         elInputLogo.addEventListener('change', function() {
             if (this.files && this.files) {
                 elFileText.textContent = this.files.name;
@@ -359,7 +374,7 @@
                 reader.onload = function(e) {
                     imgLogo.onload = function() {
                         logoCarregada = true;
-                        processarETingirMockup(); // Renderiza com a logo imediatamente
+                        processarETingirMockup();
                     };
                     imgLogo.src = e.target.result;
                 };
@@ -367,7 +382,6 @@
             }
         });
 
-        // Controles de clique e alteração em tempo real
         elBtnKraft.addEventListener('click', function() {
             modoKraftAtivo = !modoKraftAtivo;
             if (modoKraftAtivo) this.classList.add('active');
@@ -382,7 +396,7 @@
         });
 
         elModelo.addEventListener('change', carregarArquivosDoServidor);
-        elCorCordao.addEventListener('input', processarETingirMockup);
+        elCorCordao.addEventListener('change', processarETingirMockup);
 
         window.addEventListener('DOMContentLoaded', carregarArquivosDoServidor);
     </script>
