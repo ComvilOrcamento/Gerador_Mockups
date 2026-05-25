@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Lâminas Comerciais - Premium</title>
+    <title>Gerador de Lâminas Comerciais - Comvil Brindes</title>
     <style>
         * {
             margin: 0;
@@ -322,7 +322,6 @@
                     <input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5">
                 </div>
 
-                <!-- CORREÇÃO: Divisão clara de botões para fluxo de geração em JPEG -->
                 <button type="button" id="btnGenerateJPEG" class="btn-action btn-generate">⚙️ Gerar Mockup (JPEG)</button>
                 <button type="submit" id="btnDownloadLayout" class="btn-action btn-download" disabled>💾 Descarregar Layout</button>
             </form>
@@ -359,7 +358,7 @@
         let imgLateral = new Image();    
         let imgCordao = new Image();     
         let imgLogo = new Image();
-        let imgEmpresa = new Image(); // Arquivo logo-empresa.png da raiz
+        let imgEmpresa = new Image(); 
         
         let modoKraftAtivo = false;
         let logoCarregada = false;
@@ -388,7 +387,7 @@
             { nome: "Marrom Café", hex: "#86725e" }, { nome: "Bege Kraft", hex: "#cba277" }
         ];
 
-        // Carrega previamente a marca da sua empresa salva na raiz
+        // Carrega previamente a marca institucional Comvil Brindes da raiz
         imgEmpresa.crossOrigin = "anonymous";
         imgEmpresa.onload = function() { logoEmpresaPronta = true; };
         imgEmpresa.src = 'logo-empresa.png';
@@ -427,21 +426,20 @@
             return buffer;
         }
 
-        // MOTOR REESTRUTURADO: SUPORTA CHRONO-FILA PARA PINTAR O RODAPÉ CORPORATIVO
+        // MOTOR REESTRUTURADO: FUNDO CINZA UNIFICADO NO RODAPÉ + INFORMAÇÕES EXACTAS COMVIL BRINDES
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
-            // Se for gerar o arquivo final, estica a base do Canvas para criar uma margem de rodapé limpa
             canvas.width = imgBase.naturalWidth;
-            canvas.height = incluirRodape ? imgBase.naturalHeight + 140 : imgBase.naturalHeight;
+            canvas.height = incluirRodape ? imgBase.naturalHeight + 150 : imgBase.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Pinta o fundo cinza claro automático universal
+            // Preenche o fundo do layout completo com a cor cinza claro regulamentar
             ctx.fillStyle = "#e8e8e8";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Sombra projetada densa e realista
+            // Sombra projetada densa
             ctx.save();
             ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
             ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
@@ -464,7 +462,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. Logotipo Cliente (Com afunilamento real e travas de segurança)
+            // 3. LOGOTIPO CLIENTE CORRIGIDO: Valida dimensões em tempo real para evitar falhas ou sumiço
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 ctx.translate(logoX, logoY);
@@ -494,35 +492,54 @@
                 ctx.drawImage(camadaCordao, 0, 0);
             }
 
-            // 5. Sombras de Relevo fotográficas
+            // 5. Sombras de relevo multiplicadas por cima
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
-            // 6. INJEÇÃO DO RODAPÉ CORPORATIVO AUTOMÁTICO (Apenas na compilação do botão JPEG)
+            // 6. INJEÇÃO DO RODAPÉ COMVIL BRINDES (Mantém a cor cinza claro do layout de fundo conforme solicitado)
             if (incluirRodape) {
-                // Desenha barra branca de divisão comercial na base
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 140);
+                ctx.save();
+                
+                // Força o fundo cinza claro unificado no espaço do rodapé para integrar ao layout
+                ctx.fillStyle = "#e8e8e8";
+                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 150);
 
-                // Insere a marca logo-empresa.png se estiver carregada
+                // Desenha linha divisória sutil
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(30, imgBase.naturalHeight);
+                ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
+                ctx.stroke();
+
+                // Insere logo-empresa.png se estiver disponível
+                let offsetTextoX = 50;
                 if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
-                    let altDesejada = 50;
+                    let altDesejada = 48;
                     let largCalculada = (imgEmpresa.naturalWidth / imgEmpresa.naturalHeight) * altDesejada;
-                    // Posiciona à esquerda do rodapé
-                    ctx.drawImage(imgEmpresa, 40, imgBase.naturalHeight + 45, largCalculada, altDesejada);
+                    ctx.drawImage(imgEmpresa, 50, imgBase.naturalHeight + 50, largCalculada, altDesejada);
+                    offsetTextoX = 70 + largCalculada;
                 }
 
-                // Escreve os dados textuais de contato corporativo do lado direito
+                // Escreve com fidelidade absoluta as informações fornecidas na imagem
                 ctx.fillStyle = "#333333";
-                ctx.font = "bold 20px sans-serif";
                 ctx.textAlign = "left";
-                ctx.fillText("LÂMINA DE PROPOSTA COMERCIAL", 40 + (logoEmpresaPronta ? 180 : 0), imgBase.naturalHeight + 65);
                 
-                ctx.fillStyle = "#666666";
-                ctx.font = "16px sans-serif";
-                ctx.fillText("Contato imediato via site corporativo / Layout sujeito a aprovação gráfica.", 40 + (logoEmpresaPronta ? 180 : 0), imgBase.naturalHeight + 95);
+                // Linha 1: Nome da empresa destacado
+                ctx.font = "bold 21px sans-serif";
+                ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 46);
+                
+                // Linha 2: Documentos comerciais básicos
+                ctx.font = "15px sans-serif";
+                ctx.fillStyle = "#555555";
+                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", offsetTextoX, imgBase.naturalHeight + 76);
+                
+                // Linha 3: Telefones e canais de atendimento direto
+                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", offsetTextoX, imgBase.naturalHeight + 104);
+                
+                ctx.restore();
             }
         }
         function resetarPosicaoLogoPadrao() {
@@ -629,11 +646,11 @@
             }
         });
 
-        // O BOTÃO DE GERAR JPEG: Processa e mostra na tela o rodapé comercial antes de permitir o download
+        // Clique em gerar: une o mockup e as informações da Comvil Brindes na tela
         btnGenerateJPEG.addEventListener('click', function() {
-            processarETingirMockup(true); // Ativa a injeção do rodapé corporativo
+            processarETingirMockup(true); 
             mockupGeradoComRodape = true;
-            btnDownloadLayout.disabled = false; // Libera o botão de baixar arquivo
+            btnDownloadLayout.disabled = false; 
         });
 
         elBtnKraft.addEventListener('click', function() {
@@ -652,14 +669,12 @@
         elLogoGiro.addEventListener('input', () => { mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
         elModelo.addEventListener('change', carregarArquivosDoServidor);
 
-        // O BOTÃO DE DOWNLOAD: Descarrega nativamente o arquivo consolidado em .jpg
+        // Submissão final: descarrega em formato .jpg nativo estável
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
             if (!mockupGeradoComRodape) return;
-
             const link = document.createElement('a');
-            link.download = `proposta-sacola-${elModelo.value}.jpg`;
-            // Converte o canvas com rodapé em JPEG puro estável de qualidade máxima
+            link.download = `proposta-comvil-${elModelo.value}.jpg`;
             link.href = canvas.toDataURL("image/jpeg", 1.0);
             link.click();
         });
