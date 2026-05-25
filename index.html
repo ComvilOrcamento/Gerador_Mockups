@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Variações de Sacola - Cores Intensas</title>
+    <title>Variações de Sacola - Sistema Profissional</title>
     <style>
         * {
             margin: 0;
@@ -79,11 +79,46 @@
             background-size: 14px;
         }
 
-        select:focus {
-            border-color: #003366;
+        /* Input de Paleta Livre com o Mouse */
+        .color-picker-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
-        /* Quadro de Visualização Flexível */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: 1px solid #cccccc;
+            width: 50px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+        /* Botão do Modo Kraft */
+        .btn-kraft {
+            flex-grow: 1;
+            background-color: #c2a67a;
+            color: #ffffff;
+            border: none;
+            padding: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .btn-kraft:hover { background-color: #b09468; }
+        .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
+
+        /* Quadro de Visualização */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -107,7 +142,6 @@
             background-color: #f5f5f7;
         }
 
-        /* Mantém o canvas responsivo na tela, mas preserva os pixels internos originais */
         canvas {
             max-width: 100%;
             max-height: 100%;
@@ -126,7 +160,7 @@
         <div class="form-container">
             <h2>Variações de Sacola</h2>
             
-            <!-- Campo 1: Variação -->
+            <!-- 1. Variação -->
             <div class="form-group">
                 <label for="modelo">Variação *</label>
                 <select id="modelo">
@@ -135,21 +169,19 @@
                 </select>
             </div>
 
-            <!-- Campo 2: Cor do Papel -->
+            <!-- 2. Cor do Papel (Paleta Livre Mouse + Botão Kraft) -->
             <div class="form-group">
-                <label for="cor-papel">Cor de Papel *</label>
-                <select id="cor-papel">
-                    <option value="#ffffff">Branco</option>
-                    <option value="#1a1a1a">Preto</option>
-                    <option value="#e60000">Vermelho</option>
-                    <option value="#ffcc00">Amarelo</option>
-                    <option value="#0055ff">Azul</option>
-                    <option value="#009933">Verde</option>
-                    <option value="#6600cc">Roxo</option>
-                    <option value="#ff66b2">Rosa</option>
-                    <option value="#ff6600">Laranja</option>
-                    <option value="#c2a67a">Kraft</option>
-                </select>
+                <label>Cor de Papel *</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="cor-papel" value="#ffffff">
+                    <button type="button" id="btnKraft" class="btn-kraft">Usar Tom Kraft</button>
+                </div>
+            </div>
+
+            <!-- 3. Cor do Cordão (Mesma regra de paleta com mouse) -->
+            <div class="form-group">
+                <label for="cor-cordao">Cor de Cordão *</label>
+                <input type="color" id="cor-cordao" value="#1a1a1a">
             </div>
         </div>
 
@@ -166,61 +198,116 @@
 
         const elModelo = document.getElementById('modelo');
         const elCorPapel = document.getElementById('cor-papel');
+        const elCorCordao = document.getElementById('cor-cordao');
+        const elBtnKraft = document.getElementById('btnKraft');
 
         let imgSombra = new Image();
+        let imgBase = new Image();
+        let imgCordao = new Image();
+        
+        let modoKraftAtivo = false;
 
-        function processarETingirSacola() {
+        // Função isolada de corte geométrico para criar cores intensas e opacas
+        function criarCamadaColorida(imgMascara, corHex) {
+            const buffer = document.createElement('canvas');
+            buffer.width = canvas.width;
+            buffer.height = canvas.height;
+            const bCtx = buffer.getContext('2d');
+
+            if (imgMascara.complete && imgMascara.naturalWidth !== 0) {
+                bCtx.drawImage(imgMascara, 0, 0);
+                bCtx.globalCompositeOperation = 'source-in';
+                bCtx.fillStyle = corHex;
+                bCtx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            return buffer;
+        }
+
+        // Renderizador principal unificado que mantém o tamanho original da imagem
+        function processarETingirMockup() {
             if (!imgSombra.complete || imgSombra.naturalWidth === 0) return;
 
-            // MANTER O TAMANHO ORIGINAL: Força o canvas a ter os pixels exatos da imagem fornecida
+            // PRESERVAR O TAMANHO ORIGINAL: Canvas assume exatamente a resolução em pixels dos seus arquivos
             canvas.width = imgSombra.naturalWidth;
             canvas.height = imgSombra.naturalHeight;
 
-            // Limpa o fundo do quadro com a cor cinza neutra de estúdio
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Fundo neutro cinza de estúdio
             ctx.fillStyle = "#f5f5f7";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Criar a camada de tinta forte e 100% opaca baseada na silhueta da sacola
-            const bufferTinta = document.createElement('canvas');
-            bufferTinta.width = canvas.width;
-            bufferTinta.height = canvas.height;
-            const bCtx = bufferTinta.getContext('2d');
+            // 1. TINGIR O PAPEL (Cor Forte e Opaca)
+            if (imgBase.complete) {
+                // Se o modo Kraft estiver ligado, injeta o tom hexadecimal do Kraft (#c2a67a)
+                const corFinalPapel = modoKraftAtivo ? "#c2a67a" : elCorPapel.value;
+                const camadaPapel = criarCamadaColorida(imgBase, corFinalPapel);
+                ctx.drawImage(camadaPapel, 0, 0);
+            }
 
-            // 1. Desenha a silhueta original da imagem recebida no rascunho
-            bCtx.drawImage(imgSombra, 0, 0);
-            
-            // 2. Recorta e preenche com a cor sólida e forte selecionada (Elimina a transparência)
-            bCtx.globalCompositeOperation = 'source-in';
-            bCtx.fillStyle = elCorPapel.value;
-            bCtx.fillRect(0, 0, canvas.width, canvas.height);
+            // 2. TINGIR O CORDÃO (Mesma regra de sombra e opacidade forte)
+            if (imgCordao.complete) {
+                const camadaCordao = criarCamadaColorida(imgCordao, elCorCordao.value);
+                ctx.drawImage(camadaCordao, 0, 0);
+            }
 
-            // 3. Desenha a base colorida e sólida direto na tela principal
-            ctx.drawImage(bufferTinta, 0, 0);
-
-            // 4. Aplica as sombras fotográficas por cima com multiplicação pura (Mantém a cor viva e realça vincos)
+            // 3. MULTIPLICAR AS SOMBRAS GLOBAIS POR CIMA (Realismo nos vincos, dobras e alças)
             ctx.save();
             ctx.globalCompositeOperation = 'multiply';
             ctx.drawImage(imgSombra, 0, 0);
             ctx.restore();
         }
-        // Altera as imagens buscando o padrão estrito de nomenclatura na raiz do servidor
-        function carregarModelos() {
+        // Troca as imagens com base na variação e deixa fixo na tela em tempo real
+        function carregarArquivosDoServidor() {
             const sentido = elModelo.value; // 'vertical' ou 'horizontal'
+            let carregadas = 0;
 
-            // Desativa bloqueios internos do navegador para manipulação de pixels nativos
+            function conferirPronto() {
+                carregadas++;
+                if (carregadas === 3) {
+                    processarETingirMockup();
+                }
+            }
+
+            // Liberação de segurança de leitura de pixels do navegador
             imgSombra.crossOrigin = "anonymous";
-            imgSombra.onload = processarETingirSacola;
+            imgBase.crossOrigin = "anonymous";
+            imgCordao.crossOrigin = "anonymous";
 
-            // Busca os arquivos com a nomenclatura correspondente
+            imgSombra.onload = conferirPronto;
+            imgBase.onload = conferirPronto;
+            imgCordao.onload = conferirPronto;
+
+            // Busca os arquivos com a nomenclatura padronizada e correta direto na raiz
             imgSombra.src = `sacola_${sentido}_sombra.png`;
+            imgBase.src = `sacola_${sentido}_base.png`;
+            imgCordao.src = `sacola_${sentido}_cordao.png`;
         }
 
-        // Eventos instantâneos de alteração dos seletores
-        elModelo.addEventListener('change', carregarModelos);
-        elCorPapel.addEventListener('change', processarETingirSacola);
+        // Ativação e gerenciamento inteligente do modo Kraft
+        elBtnKraft.addEventListener('click', function() {
+            modoKraftAtivo = !modoKraftAtivo;
+            if (modoKraftAtivo) {
+                this.classList.add('active');
+            } else {
+                this.classList.remove('active');
+            }
+            processarETingirMockup();
+        });
 
-        // Inicializa o primeiro modelo fixo (Vertical) assim que a página carrega
-        window.addEventListener('DOMContentLoaded', carregarModelos);
+        // Desliga o Kraft se o usuário decidir mexer na paleta de cores com o mouse
+        elCorPapel.addEventListener('input', () => {
+            modoKraftAtivo = false;
+            elBtnKraft.classList.remove('active');
+            processarETingirMockup();
+        });
+
+        // Escuta os demais seletores em tempo real
+        elModelo.addEventListener('change', carregarArquivosDoServidor);
+        elCorCordao.addEventListener('input', processarETingirMockup);
+
+        // Inicializa o sistema fixando o modelo Vertical na abertura da página
+        window.addEventListener('DOMContentLoaded', carregarArquivosDoServidor);
     </script>
 </body>
 </html>
