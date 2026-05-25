@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Mockup Realista 3D</title>
-    
-    <!-- Biblioteca HTML2Canvas para consolidação e salvamento seguro -->
-    <script src="https://cloudflare.com"></script>
-
     <style>
         * {
             margin: 0;
@@ -33,7 +29,7 @@
             align-items: stretch;
         }
 
-        /* Formulário Lateral Esquerdo */
+        /* Painel Lateral de Controle */
         .form-container {
             background-color: #ffffff;
             padding: 30px 25px;
@@ -64,7 +60,7 @@
             margin-bottom: 8px;
         }
 
-        select {
+        select, input[type="range"] {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #cccccc;
@@ -73,17 +69,14 @@
             color: #333333;
             font-size: 14px;
             outline: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://w3.org' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 14px;
         }
 
-        select:focus {
-            border-color: #003366;
+        input[type="range"] {
+            padding: 5px 0;
+            accent-color: #003366;
         }
 
+        /* Botão de Upload na parte de baixo */
         .file-input-wrapper {
             position: relative;
             display: flex;
@@ -92,6 +85,7 @@
             border-radius: 6px;
             padding: 6px;
             background-color: #ffffff;
+            margin-bottom: 15px;
         }
 
         .file-input-wrapper input[type="file"] {
@@ -132,15 +126,9 @@
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background-color 0.2s;
         }
 
-        .btn-submit:hover {
-            background-color: #002244;
-        }
-
-        /* Área do Visualizador Direita */
+        /* Área de Visualização do Canvas */
         .preview-container {
             background-color: #ffffff;
             border-radius: 8px;
@@ -154,100 +142,88 @@
 
         .preview-box {
             width: 100%;
-            height: 100%;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            background-color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        /* Estrutura de Camadas HTML Clássicas */
-        .mockup-layers {
-            position: relative;
-            width: 100%;
             max-width: 500px;
             aspect-ratio: 1 / 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: #f9f9f9;
         }
 
-        .layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-            pointer-events: none;
-        }
-
-        /* Máscaras de pintura dinâmica */
-        .layer-mascara-sacola {
-            z-index: 2;
-            -webkit-mask-size: contain;
-            mask-size: contain;
-            -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
-            -webkit-mask-position: center;
-            mask-position: center;
-        }
-
-        .layer-cor-sacola { z-index: 1; }
-
-        .layer-mascara-cordao {
-            z-index: 4;
-            -webkit-mask-size: contain;
-            mask-size: contain;
-            -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
-            -webkit-mask-position: center;
-            mask-position: center;
-        }
-
-        .layer-cor-cordao { z-index: 3; }
-
-        /* A foto real por cima de tudo multiplicando sombras reais */
-        .layer-base {
-            z-index: 5;
-            mix-blend-mode: multiply; 
-        }
-
-        /* Aplicação da logo do cliente com distorção tridimensional realista */
-        .layer-logo {
-            position: absolute;
-            z-index: 6;
-            filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.12)); 
-            mix-blend-mode: multiply;
         }
 
         @media (max-width: 768px) {
             .container { flex-direction: column; }
             .form-container { width: 100%; }
-            .mockup-layers { min-height: 350px; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <!-- Formulário Lateral Esquerdo -->
         <div class="form-container">
             <h2>Mockup Corrigido 3D</h2>
             
             <form id="mockupForm">
+                <!-- 1. Variação -->
                 <div class="form-group">
-                    <label for="modelo">Modelo da Sacola *</label>
+                    <label for="modelo">Variação *</label>
                     <select id="modelo" required>
-                        <option value="horizontal">Sacola Deitada (Horizontal)</option>
-                        <option value="vertical">Sacola Em Pé (Vertical)</option>
+                        <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
                     </select>
                 </div>
 
+                <!-- 2. Cor da Sacola/Papel -->
                 <div class="form-group">
-                    <label for="logo">Logotipo do Cliente (PNG Transparente) *</label>
+                    <label for="cor-papel">Cor de Papel *</label>
+                    <select id="cor-papel" required>
+                        <option value="#ffffff">Branco</option>
+                        <option value="#1a1a1a">Preto</option>
+                        <option value="#e60000">Vermelho</option>
+                        <option value="#ffcc00">Amarelo</option>
+                        <option value="#0055ff">Azul</option>
+                        <option value="#009933">Verde</option>
+                        <option value="#6600cc">Roxo</option>
+                        <option value="#ff66b2">Rosa</option>
+                        <option value="#ff6600">Laranja</option>
+                        <option value="#c2a67a">Kraft</option>
+                    </select>
+                </div>
+
+                <!-- 3. Cor do Cordão -->
+                <div class="form-group">
+                    <label for="cordao">Cor de Cordão *</label>
+                    <select id="cordao" required>
+                        <option value="#ffffff">Branco</option>
+                        <option value="#1a1a1a">Preto</option>
+                        <option value="#e60000">Vermelho</option>
+                        <option value="#ffcc00">Amarelo</option>
+                        <option value="#0055ff">Azul</option>
+                        <option value="#009933">Verde</option>
+                        <option value="#6600cc">Roxo</option>
+                        <option value="#ff66b2">Rosa</option>
+                        <option value="#ff6600">Laranja</option>
+                        <option value="#daa520">Dourado</option>
+                    </select>
+                </div>
+
+                <!-- 4. Ajuste de Tamanho da Logo -->
+                <div class="form-group">
+                    <label for="logo-zoom">Tamanho do Logotipo (Zoom)</label>
+                    <input type="range" id="logo-zoom" min="10" max="70" value="35">
+                </div>
+
+                <!-- 5. Upload de Arquivo (na parte de baixo) -->
+                <div class="form-group">
+                    <label>Logotipo do Cliente (PNG Transparente) *</label>
                     <div class="file-input-wrapper">
                         <button type="button" class="btn-file">Escolher ficheiro</button>
                         <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
@@ -255,157 +231,141 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="cordao">Cor do Cordão / Alça *</label>
-                    <select id="cordao" required>
-                        <option value="#000000">Preto</option>
-                        <option value="#ffffff">Branco</option>
-                        <option value="#ff0000">Vermelho</option>
-                        <option value="#003366">Azul Escuro</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="cor-sacola">Cor da Sacola *</label>
-                    <select id="cor-sacola" required>
-                        <option value="#ffffff">Branco</option>
-                        <option value="#000000">Preto</option>
-                        <option value="#c2a67a">Pardo / Kraft</option>
-                        <option value="#0055ff">Azul</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn-submit">Gerar e Baixar Mockup</button>
+                <button type="submit" class="btn-submit">Baixar Imagem Final</button>
             </form>
         </div>
 
+        <!-- Área do Visualizador Direita -->
         <div class="preview-container">
             <div class="preview-box">
-                <div class="mockup-layers" id="mockupContainer">
-                    
-                    <div class="layer layer-cor-sacola" id="layerCorSacola"></div>
-                    <div class="layer layer-mascara-sacola" id="maskSacola"></div>
-                    
-                    <div class="layer layer-cor-cordao" id="layerCorCordao"></div>
-                    <div class="layer layer-mascara-cordao" id="maskCordao"></div>
-                    
-                    <img class="layer layer-base" id="imgBase" src="horizontal-sacola-branca.png" alt="Base">
-                    
-                    <img class="layer layer-logo" id="previewLogo" src="" alt="" style="display:none;">
-
-                </div>
+                <canvas id="mockupCanvas" width="800" height="800"></canvas>
             </div>
         </div>
     </div>
-    <!-- LOGICA JAVASCRIPT -->
     <script>
+        const canvas = document.getElementById('mockupCanvas');
+        const ctx = canvas.getContext('2d');
+
         const elModelo = document.getElementById('modelo');
-        const elCorSacola = document.getElementById('cor-sacola');
+        const elCorPapel = document.getElementById('cor-papel');
         const elCorCordao = document.getElementById('cordao');
         const elInputLogo = document.getElementById('logo');
         const elFileText = document.getElementById('file-text');
-
-        const imgBase = document.getElementById('imgBase');
-        const maskSacola = document.getElementById('maskSacola');
-        const maskCordao = document.getElementById('maskCordao');
-        const previewLogo = document.getElementById('previewLogo');
+        const elLogoZoom = document.getElementById('logo-zoom');
         const elForm = document.getElementById('mockupForm');
-        const mockupContainer = document.getElementById('mockupContainer');
 
-        function atualizarMockup() {
-            const modelo = elModelo.value;
-            const corSacolaHex = elCorSacola.value;
-            const corCordaoHex = elCorCordao.value;
+        // Objetos de imagem nativos
+        let imgBase = new Image();
+        let imgMaskSacola = new Image();
+        let imgMaskCordao = new Image();
+        let imgLogoClient = new Image();
+        let logoCarregada = false;
 
-            if (modelo === 'vertical') {
-                imgBase.src = 'sacola_vertical_sombras.png';
-                
-                maskSacola.style.webkitMaskImage = "url('sacola_vertical_mascara.png')";
-                maskSacola.style.maskImage = "url('sacola_vertical_mascara.png')";
-                
-                maskCordao.style.webkitMaskImage = "url('cordao_vertical_mascara.png')";
-                maskCordao.style.maskImage = "url('cordao_vertical_mascara.png')";
-                
-                // Configuração Retal / Plana para a Sacola Vertical Frontal
-                previewLogo.style.top = "52%";
-                previewLogo.style.left = "50%";
-                previewLogo.style.transform = "translate(-50%, -50%)"; 
-                previewLogo.style.maxWidth = "35%";
-                previewLogo.style.maxHeight = "35%";
-            } else {
-                imgBase.src = 'horizontal-sacola-branca.png';
-                
-                maskSacola.style.webkitMaskImage = "url('horizontal-sacola-mascara.png')";
-                maskSacola.style.maskImage = "url('horizontal-sacola-mascara.png')";
-                
-                maskCordao.style.webkitMaskImage = "url('horizontal-cordao-mascara.png')";
-                maskCordao.style.maskImage = "url('horizontal-cordao-mascara.png')";
-                
-                // Correção tridimensional exata baseada na imagem enviada da sacola inclinada
-                previewLogo.style.top = "50%"; 
-                previewLogo.style.left = "54%"; 
-                // skewY e rotate inclinam o logotipo acompanhando o plano exato das dobras do papel em perspectiva
-                previewLogo.style.transform = "translate(-50%, -50%) rotate(-1.5deg) skewY(-1.5deg)";
-                previewLogo.style.maxWidth = "38%";
-                previewLogo.style.maxHeight = "25%";
+        // Desenha o mockup respeitando a ordem matemática de camadas
+        function renderizarMockup() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Camada 1: Pintar a Cor do Papel usando a Máscara da Sacola
+            if (imgMaskSacola.complete && imgMaskSacola.naturalWidth !== 0) {
+                ctx.save();
+                ctx.drawImage(imgMaskSacola, 0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'source-in';
+                ctx.fillStyle = elCorPapel.value;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
             }
 
-            maskSacola.style.backgroundColor = corSacolaHex;
-            maskCordao.style.backgroundColor = corCordaoHex;
+            // Camada 2: Pintar a Cor do Cordão usando a Máscara do Cordão
+            if (imgMaskCordao.complete && imgMaskCordao.naturalWidth !== 0) {
+                ctx.save();
+                ctx.drawImage(imgMaskCordao, 0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = 'source-in';
+                ctx.fillStyle = elCorCordao.value;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // Camada 3: Multiplicar a Foto de Base (Sombras e Dobras) por cima de tudo
+            if (imgBase.complete && imgBase.naturalWidth !== 0) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.drawImage(imgBase, 0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+
+            // Camada 4: Desenhar a Logomarca Centralizada com Ajuste de Tamanho
+            if (logoCarregada && imgLogoClient.complete) {
+                ctx.save();
+                
+                // Centralização padrão base (Eixo X: 50%, Eixo Y: 52%)
+                ctx.translate(canvas.width * 0.50, canvas.height * 0.52);
+                
+                // Calcula o tamanho com base na barra de rolagem (Range)
+                let percentualZoom = elLogoZoom.value / 100;
+                let larguraLogo = canvas.width * percentualZoom;
+                let alturaLogo = (imgLogoClient.height / imgLogoClient.width) * larguraLogo;
+                
+                // Desenha a partir do centro do logotipo
+                ctx.drawImage(imgLogoClient, -larguraLogo/2, -alturaLogo/2, larguraLogo, alturaLogo);
+                ctx.restore();
+            }
+        }
+        // Alterna os arquivos com base na variação escolhida
+        function alternarModelo() {
+            const modelo = elModelo.value;
+
+            if (modelo === 'vertical') {
+                // Utiliza exatamente os seus nomes para o modelo Vertical
+                imgBase.src = 'sacola_vertical_base.png';
+                imgMaskSacola.src = 'sacola_vertical_mascara.png';
+                imgMaskCordao.src = 'cordao_vertical_mascara.png';
+            } else {
+                // Deixa preparado para receber os nomes do modelo horizontal no futuro
+                imgBase.src = 'horizontal-sacola-branca.png';
+                imgMaskSacola.src = 'horizontal-sacola-mascara.png';
+                imgMaskCordao.src = 'horizontal-cordao-mascara.png';
+            }
         }
 
-        // Renderiza e injeta o logo em tempo de execução
+        // Eventos de gatilho para redesenhar o canvas instantaneamente
+        imgBase.onload = renderizarMockup;
+        imgMaskSacola.onload = renderizarMockup;
+        imgMaskCordao.onload = renderizarMockup;
+        imgLogoClient.onload = renderizarMockup;
+
+        elModelo.addEventListener('change', alternarModelo);
+        elCorPapel.addEventListener('change', renderizarMockup);
+        elCorCordao.addEventListener('change', renderizarMockup);
+        elLogoZoom.addEventListener('input', renderizarMockup); // Atualiza enquanto arrasta o zoom
+
+        // Carrega o arquivo de imagem do cliente
         elInputLogo.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 elFileText.textContent = this.files[0].name;
-                
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    previewLogo.src = e.target.result;
-                    previewLogo.style.display = 'block';
-                }
+                    imgLogoClient.src = e.target.result;
+                    logoCarregada = true;
+                };
                 reader.readAsDataURL(this.files[0]);
             }
         });
 
-        elModelo.addEventListener('change', atualizarMockup);
-        elCorSacola.addEventListener('change', atualizarMockup);
-        elCorCordao.addEventListener('change', atualizarMockup);
-        // Renderizador nativo corrigido para exportar a sacola tridimensional com as cores
+        // Evento para baixar o resultado final de forma nativa e sem quebras
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const submitBtn = elForm.querySelector('.btn-submit');
-            const textoOriginal = submitBtn.textContent;
-            submitBtn.textContent = "Processando Imagem...";
-            submitBtn.disabled = true;
-
-            // Renderiza com escala duplicada para eliminar serrilhados no arquivo salvo
-            html2canvas(mockupContainer, {
-                backgroundColor: null, 
-                useCORS: true,        
-                scale: 2,
-                logging: false
-            }).then(canvas => {
-                const image = canvas.toDataURL("image/png");
-                
-                const link = document.createElement('a');
-                const nomeModelo = elModelo.value;
-                link.download = `mockup-realista-${nomeModelo}.png`;
-                link.href = image;
-                link.click();
-
-                submitBtn.textContent = textoOriginal;
-                submitBtn.disabled = false;
-            }).catch(error => {
-                console.error("Erro na compilação do Mockup:", error);
-                submitBtn.textContent = textoOriginal;
-                submitBtn.disabled = false;
-                alert("Ocorreu um erro ao salvar. Certifique-se de que os arquivos de imagem estão todos na raiz do servidor.");
-            });
+            if(!logoCarregada) {
+                alert("Por favor, selecione um logotipo antes de baixar.");
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = `mockup-${elModelo.value}-final.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
         });
 
-        window.addEventListener('DOMContentLoaded', atualizarMockup);
+        // Inicializa o sistema na abertura do navegador
+        window.addEventListener('DOMContentLoaded', alternarModelo);
     </script>
 </body>
 </html>
