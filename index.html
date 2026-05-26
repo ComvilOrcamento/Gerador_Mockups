@@ -453,6 +453,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
+            // MOTOR RECALIBRADO: LADO DIREITO EXATAMENTE 20% MENOR NA VERTICAL (EIXO ESQUERDO INTEGRAL)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -465,12 +466,13 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // CORREÇÃO VISUAL: Sinal invertido de positivo para NEGATIVO (-0.200) no Skew X.
-                // Isso muda a direção da inclinação superior, deitando a arte perfeitamente para a DIREITA.
+                // ATUALIZAÇÃO DA MATRIZ: 
+                // O terceiro parâmetro (-0.200) cuida da inclinação para a direita.
+                // O quarto parâmetro (0.800) executa a compressão vertical exata de 20% solicitada apenas para a metade direita em fuga.
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0, -0.200, 1, 0, 0); 
+                    ctx.transform(1, 0.200, -0.200, 0.800, 0, 0); 
                 } else {
-                    ctx.transform(1, 0, -0.080, 1, 0, 0); 
+                    ctx.transform(1, 0.080, -0.080, 0.920, 0, 0); 
                 }
                 
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
@@ -562,8 +564,8 @@
         }
 
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                elFileText.textContent = e.target.files[0].name;
+            if (e.target.files && e.target.files) {
+                elFileText.textContent = e.target.files.name;
                 const leitorBase64 = new FileReader();
                 leitorBase64.onload = function(evt) {
                     logoCarregada = false;
