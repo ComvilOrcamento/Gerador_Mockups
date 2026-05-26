@@ -553,6 +553,7 @@
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
+            // --- RODAPÉ 100% CENTRALIZADO ---
             if (incluirRodape) {
                 ctx.save();
                 ctx.fillStyle = "#e8e8e8";
@@ -565,27 +566,29 @@
                 ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
                 ctx.stroke();
 
-                let altDesejada = 34; 
-                let offsetTextoX = 40;
+                ctx.textAlign = "center";
+                let centroX = canvas.width / 2;
+                let topoRodapeY = imgBase.naturalHeight;
 
+                // Desenha a logo da empresa perfeitamente centralizada
                 if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
+                    let altDesejada = 26; 
                     let largCalculada = (imgEmpresa.naturalWidth / imgEmpresa.naturalHeight) * altDesejada;
-                    ctx.drawImage(imgEmpresa, 40, imgBase.naturalHeight + 28, largCalculada, altDesejada);
-                    offsetTextoX = 55 + largCalculada;
+                    ctx.drawImage(imgEmpresa, centroX - (largCalculada / 2), topoRodapeY + 15, largCalculada, altDesejada);
                 }
 
-                ctx.textAlign = "left";
                 ctx.fillStyle = "#1e293b";
-                ctx.font = "bold 13.5px sans-serif";
-                ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 38);
+                ctx.font = "bold 13px sans-serif";
+                ctx.fillText("COMVIL BRINDES", centroX, topoRodapeY + 56);
                 
-                ctx.font = "10.5px sans-serif";
+                ctx.font = "10px sans-serif";
                 ctx.fillStyle = "#475569";
-                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", offsetTextoX, imgBase.naturalHeight + 54);
-                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", offsetTextoX, imgBase.naturalHeight + 70);
+                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", centroX, topoRodapeY + 74);
+                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", centroX, topoRodapeY + 90);
                 ctx.restore();
             }
         }
+        // --- FILEREADER CORRIGIDO PARA EVITAR ERROS NO CARREGAMENTO DA IMAGEM ---
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 elFileText.textContent = e.target.files[0].name;
