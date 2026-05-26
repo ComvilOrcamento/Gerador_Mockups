@@ -77,6 +77,7 @@
             background-position: right 12px center;
             background-size: 14px;
         }
+        
         .papel-triplo-wrapper {
             display: flex;
             gap: 10px;
@@ -128,7 +129,6 @@
 
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
-
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -180,7 +180,7 @@
             height: 100%;
             cursor: pointer;
         }
-
+        
         .btn-file {
             background-color: #efefef;
             border: 1px solid #dddddd;
@@ -423,6 +423,46 @@
             return buffer;
         }
 
+        function resetarPosicaoLogoPadrao() {
+            if (!imgBase.naturalWidth) return;
+            if (elModelo.value === 'horizontal') {
+                logoX = imgBase.naturalWidth * 0.48;
+                logoY = imgBase.naturalHeight * 0.54;
+            } else {
+                logoX = imgBase.naturalWidth * 0.50;
+                logoY = imgBase.naturalHeight * 0.53;
+            }
+        }
+
+        function carregarArquivosDoServidor() {
+            const sentido = elModelo.value;
+            let carregadas = 0;
+
+            function verificarPronto() {
+                carregadas++;
+                if (carregadas === 4) {
+                    resetarPosicaoLogoPadrao();
+                    mockupGeradoComRodape = false;
+                    btnDownloadLayout.disabled = true;
+                    processarETingirMockup(false);
+                }
+            }
+
+            imgBase.crossOrigin = "anonymous";
+            imgFrente.crossOrigin = "anonymous";
+            imgLateral.crossOrigin = "anonymous";
+            imgCordao.crossOrigin = "anonymous";
+
+            imgBase.onload = verificarPronto;
+            imgFrente.onload = verificarPronto;
+            imgLateral.onload = verificarPronto;
+            imgCordao.onload = verificarPronto;
+
+            imgBase.src = `sacola_${sentido}_base.png?v=${Date.now()}`;
+            imgFrente.src = `sacola_${sentido}_frente.png?v=${Date.now()}`;
+            imgLateral.src = `sacola_${sentido}_lateral.png?v=${Date.now()}`;
+            imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
+        }
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
@@ -453,9 +493,15 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // CORREÇÃO: EIXO SUPERIOR PUXANDO RIGOROSAMENTE PARA A DIREITA (SINAL NEGATIVO)
+            // --- APLICAÇÃO DE EFEITO POWERCLIP (MÁSCARA DE RECORTE VETORIAL) ---
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
+                
+                // Isola o desenho do logotipo estritamente ao canal alpha (silhueta) da frente da sacola
+                if (imgFrente.complete && imgFrente.naturalWidth > 0) {
+                    ctx.drawImage(imgFrente, 0, 0);
+                    ctx.globalCompositeOperation = 'source-in';
+                }
                 
                 let percentualZoom = elLogoZoom.value / 100;
                 logoAtualWidth = imgBase.naturalWidth * percentualZoom;
@@ -466,18 +512,13 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // Força o ponto fixo de ancoragem inicial na quina esquerda (-largura/2)
-                ctx.translate(-logoAtualWidth / 2, 0);
-
-                // O terceiro parâmetro (-0.150) define o cisalhamento horizontal (puxa o topo para a direita).
-                // O quarto parâmetro (0.800) executa de forma limpa o encolhimento vertical de 20% na lateral direita.
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0, -0.025, 0, 0, 0); 
+                    ctx.transform(1, 0, -0.200, 1, 0, 0); 
                 } else {
-                    ctx.transform(1, 0, -0.060, 0.920, 0, 0); 
+                    ctx.transform(1, 0, -0.080, 1, 0, 0); 
                 }
                 
-                ctx.drawImage(imgLogo, 0, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
+                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
@@ -524,47 +565,6 @@
                 ctx.restore();
             }
         }
-        function resetarPosicaoLogoPadrao() {
-            if (!imgBase.naturalWidth) return;
-            if (elModelo.value === 'horizontal') {
-                logoX = imgBase.naturalWidth * 0.48;
-                logoY = imgBase.naturalHeight * 0.54;
-            } else {
-                logoX = imgBase.naturalWidth * 0.50;
-                logoY = imgBase.naturalHeight * 0.53;
-            }
-        }
-
-        function carregarArquivosDoServidor() {
-            const sentido = elModelo.value;
-            let carregadas = 0;
-
-            function verificarPronto() {
-                carregadas++;
-                if (carregadas === 4) {
-                    resetarPosicaoLogoPadrao();
-                    mockupGeradoComRodape = false;
-                    btnDownloadLayout.disabled = true;
-                    processarETingirMockup(false);
-                }
-            }
-
-            imgBase.crossOrigin = "anonymous";
-            imgFrente.crossOrigin = "anonymous";
-            imgLateral.crossOrigin = "anonymous";
-            imgCordao.crossOrigin = "anonymous";
-
-            imgBase.onload = verificarPronto;
-            imgFrente.onload = verificarPronto;
-            imgLateral.onload = verificarPronto;
-            imgCordao.onload = verificarPronto;
-
-            imgBase.src = `sacola_${sentido}_base.png?v=${Date.now()}`;
-            imgFrente.src = `sacola_${sentido}_frente.png?v=${Date.now()}`;
-            imgLateral.src = `sacola_${sentido}_lateral.png?v=${Date.now()}`;
-            imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
-        }
-
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 elFileText.textContent = e.target.files[0].name;
