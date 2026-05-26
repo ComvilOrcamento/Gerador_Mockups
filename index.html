@@ -453,6 +453,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
+            // RESTAURAÇÃO COMPLETA DO MOTOR ORIGINAL QUE ESTAVA FUNCIONANDO ANTERIORMENTE
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -465,26 +466,14 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // CORREÇÃO 1: Reduzido o Skew X de 30% para exatamente 15% (-0.150 move o eixo superior para a direita)
-                ctx.transform(1, 0, -0.150, 1, 0, 0);
-
-                // CORREÇÃO 2: Aumentado o afunilamento lateral de fuga de 20% para exatamente 30% (fator 0.300)
-                let fatorFuga = elModelo.value === 'horizontal' ? 0.300 : 0.120;
-
-                // Fatiamento vertical nativo para a convergência cônica proporcional das extremidades
-                for (let i = 0; i < logoAtualWidth; i++) {
-                    let progressoHorizontal = (i - logoAtualWidth / 2) / logoAtualWidth; 
-                    let escalaVerticalFatia = 1 - (progressoHorizontal * fatorFuga);
-                    
-                    let fatiaSourceX = (i / logoAtualWidth) * imgLogo.naturalWidth;
-                    let largFatiaSource = imgLogo.naturalWidth / logoAtualWidth;
-
-                    ctx.drawImage(
-                        imgLogo,
-                        fatiaSourceX, 0, largFatiaSource, imgLogo.naturalHeight,
-                        (i - logoAtualWidth / 2), (-logoAtualHeight * escalaVerticalFatia) / 2, 1, logoAtualHeight * escalaVerticalFatia
-                    );
+                // Aplica de volta os parâmetros originais estáveis de transform que você validou
+                if (elModelo.value === 'horizontal') {
+                    ctx.transform(1, 0.200, 0, 1, 0, 0); 
+                } else {
+                    ctx.transform(1, 0.080, 0, 1, 0, 0); 
                 }
+                
+                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
@@ -572,9 +561,10 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
+        // CORREÇÃO DEFINITIVA DO ARQUIVO: readAsDataURL agora mapeia explicitamente o arquivo [0] da fila
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files) {
-                elFileText.textContent = e.target.files.name;
+            if (e.target.files && e.target.files[0]) {
+                elFileText.textContent = e.target.files[0].name;
                 const leitorBase64 = new FileReader();
                 leitorBase64.onload = function(evt) {
                     logoCarregada = false;
@@ -588,7 +578,7 @@
                     };
                     imgLogo.src = evt.target.result;
                 };
-                leitorBase64.readAsDataURL(e.target.files);
+                leitorBase64.readAsDataURL(e.target.files[0]);
             }
         });
 
