@@ -180,7 +180,7 @@
             height: 100%;
             cursor: pointer;
         }
-        
+
         .btn-file {
             background-color: #efefef;
             border: 1px solid #dddddd;
@@ -394,7 +394,7 @@
             mostruarioCordao.forEach(cor => {
                 const box = document.createElement('div');
                 box.className = "cordao-box";
-                box.style.backgroundColor = color = cor.hex;
+                box.style.backgroundColor = cor.hex;
                 box.title = cor.nome;
                 if (cor.hex === corCordaoSelecionada) box.classList.add('active');
                 box.addEventListener('click', function() {
@@ -423,6 +423,103 @@
             return buffer;
         }
 
+        function processarETingirMockup(incluirRodape = false) {
+            if (!imgBase.complete || imgBase.naturalWidth === 0) return;
+
+            canvas.width = imgBase.naturalWidth;
+            canvas.height = incluirRodape ? imgBase.naturalHeight + 110 : imgBase.naturalHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#e8e8e8";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
+            ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
+            ctx.shadowOffsetX = imgBase.naturalWidth * 0.015; 
+            ctx.shadowOffsetY = imgBase.naturalHeight * 0.025; 
+            ctx.drawImage(imgBase, 0, 0);
+            ctx.restore();
+
+            if (imgFrente.complete && imgFrente.naturalWidth > 0) {
+                const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
+                const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
+                ctx.drawImage(camadaFrente, 0, 0);
+            }
+
+            if (imgLateral.complete && imgLateral.naturalWidth > 0) {
+                const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
+                const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
+                ctx.drawImage(camadaLateral, 0, 0);
+            }
+
+            if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
+                ctx.save();
+                
+                let percentualZoom = elLogoZoom.value / 100;
+                logoAtualWidth = imgBase.naturalWidth * percentualZoom;
+                let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
+                logoAtualHeight = proporcao * logoAtualWidth;
+                
+                ctx.translate(logoX, logoY);
+                let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
+                ctx.rotate(giroManualRad);
+
+                // CORREÇÃO VISUAL: Sinal invertido de positivo para NEGATIVO (-0.200) no Skew X.
+                // Isso muda a direção da inclinação superior, deitando a arte perfeitamente para a DIREITA.
+                if (elModelo.value === 'horizontal') {
+                    ctx.transform(1, 0, -0.200, 1, 0, 0); 
+                } else {
+                    ctx.transform(1, 0, -0.080, 1, 0, 0); 
+                }
+                
+                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
+                ctx.restore();
+            }
+
+            if (imgCordao.complete && imgCordao.naturalWidth > 0) {
+                const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
+                ctx.drawImage(camadaCordao, 0, 0);
+            }
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.drawImage(imgBase, 0, 0);
+            ctx.restore();
+
+            if (incluirRodape) {
+                ctx.save();
+                ctx.fillStyle = "#e8e8e8";
+                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
+
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(30, imgBase.naturalHeight);
+                ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
+                ctx.stroke();
+
+                let altDesejada = 34; 
+                let offsetTextoX = 40;
+
+                if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
+                    let largCalculada = (imgEmpresa.naturalWidth / imgEmpresa.naturalHeight) * altDesejada;
+                    ctx.drawImage(imgEmpresa, 40, imgBase.naturalHeight + 28, largCalculada, altDesejada);
+                    offsetTextoX = 55 + largCalculada;
+                }
+
+                ctx.textAlign = "left";
+                ctx.fillStyle = "#1e293b";
+                ctx.font = "bold 13.5px sans-serif";
+                ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 38);
+                
+                ctx.font = "10.5px sans-serif";
+                ctx.fillStyle = "#475569";
+                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", offsetTextoX, imgBase.naturalHeight + 54);
+                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", offsetTextoX, imgBase.naturalHeight + 70);
+                ctx.restore();
+            }
+        }
         function resetarPosicaoLogoPadrao() {
             if (!imgBase.naturalWidth) return;
             if (elModelo.value === 'horizontal') {
@@ -463,134 +560,10 @@
             imgLateral.src = `sacola_${sentido}_lateral.png?v=${Date.now()}`;
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
-        function desenharLogoPerspectiva(ctx, img, x, y, largura, altura, escalaDireita) {
-            const fatias = 100;
-            const largFatia = largura / fatias;
 
-            for (let i = 0; i < fatias; i++) {
-                const progresso = i / fatias;
-                const fatorAltura = 1 - (progresso * (1 - escalaDireita));
-                const altFatia = altura * fatorAltura;
-                const secaoX = x - largura / 2 + (i * largFatia);
-                const secaoY = y - altFatia / 2;
-
-                ctx.drawImage(
-                    img,
-                    (i * (img.naturalWidth / fatias)), 0, (img.naturalWidth / fatias), img.naturalHeight,
-                    secaoX, secaoY, largFatia + 0.5, altFatia
-                );
-            }
-        }
-
-        function processarETingirMockup(incluirRodape = false) {
-            if (!imgBase.complete || imgBase.naturalWidth === 0) return;
-
-            canvas.width = imgBase.naturalWidth;
-            canvas.height = incluirRodape ? imgBase.naturalHeight + 110 : imgBase.naturalHeight;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#e8e8e8";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.save();
-            ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
-            ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
-            ctx.shadowOffsetX = imgBase.naturalWidth * 0.015; 
-            ctx.shadowOffsetY = imgBase.naturalHeight * 0.025; 
-            ctx.drawImage(imgBase, 0, 0);
-            ctx.restore();
-
-            if (imgFrente.complete && imgFrente.naturalWidth > 0) {
-                const corFinalFrente = modoKraftAtivo ? "#c2a67a" : elCorFrente.value;
-                const camadaFrente = criarCamadaColorida(imgFrente, corFinalFrente);
-                ctx.drawImage(camadaFrente, 0, 0);
-            }
-
-            if (imgLateral.complete && imgLateral.naturalWidth > 0) {
-                const corFinalLateral = modoKraftAtivo ? "#c2a67a" : elCorLateral.value;
-                const camadaLateral = criarCamadaColorida(imgLateral, corFinalLateral);
-                ctx.drawImage(camadaLateral, 0, 0);
-            }
-
-            if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
-                ctx.save();
-                
-                if (imgFrente.complete && imgFrente.naturalWidth > 0) {
-                    ctx.drawImage(imgFrente, 0, 0);
-                    ctx.globalCompositeOperation = 'source-in';
-                }
-                
-                let percentualZoom = elLogoZoom.value / 100;
-                logoAtualWidth = imgBase.naturalWidth * percentualZoom;
-                let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
-                logoAtualHeight = proporcao * logoAtualWidth;
-                
-                ctx.translate(logoX, logoY);
-                let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
-                ctx.rotate(giroManualRad);
-
-                if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0, -0.200, 1, 0, 0); 
-                } else {
-                    ctx.transform(1, 0, -0.080, 1, 0, 0); 
-                }
-                
-                const escalaDireita = elModelo.value === 'horizontal' ? 0.82 : 0.90;
-                desenharLogoPerspectiva(ctx, imgLogo, 0, 0, logoAtualWidth, logoAtualHeight, escalaDireita);
-                
-                ctx.restore();
-            }
-
-            if (imgCordao.complete && imgCordao.naturalWidth > 0) {
-                const camadaCordao = criarCamadaColorida(imgCordao, corCordaoSelecionada);
-                ctx.drawImage(camadaCordao, 0, 0);
-            }
-
-            ctx.save();
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.drawImage(imgBase, 0, 0);
-            ctx.restore();
-
-            if (incluirRodape) {
-                ctx.save();
-                ctx.fillStyle = "#e8e8e8";
-                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
-
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(30, imgBase.naturalHeight);
-                ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
-                ctx.stroke();
-
-                ctx.textAlign = "center";
-                let centroX = canvas.width / 2;
-                let topoRodapeY = imgBase.naturalHeight;
-
-                if (logoEmpresaPronta && imgEmpresa.naturalWidth > 0) {
-                    let altDesejada = 26; 
-                    let largCalculada = (imgEmpresa.naturalWidth / imgEmpresa.naturalHeight) * altDesejada;
-                    ctx.drawImage(imgEmpresa, centroX - (largCalculada / 2), topoRodapeY + 15, largCalculada, altDesejada);
-                }
-
-                ctx.fillStyle = "#1e293b";
-                ctx.font = "bold 13px sans-serif";
-                ctx.fillText("COMVIL BRINDES", centroX, topoRodapeY + 56);
-                
-                ctx.font = "10px sans-serif";
-                ctx.fillStyle = "#475569";
-                ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", centroX, topoRodapeY + 74);
-                ctx.fillText("☎ Fixo: 11 3461-0813  |  📱 WhatsApp: 11 97024-3064", centroX, topoRodapeY + 90);
-                ctx.restore();
-            }
-        }
-        // --- PROCESSO DE CARREGAMENTO UNIVERSAL DA IMAGEM ---
         elInputLogo.addEventListener('change', function(e) {
-            // Usa indexação por string dinâmica de propriedade para garantir integridade do caractere de transferência zero
-            var chaveAcesso = String.fromCharCode(48); 
-            if (e.target.files && e.target.files[chaveAcesso]) {
-                const arquivoAlvo = e.target.files[chaveAcesso];
-                elFileText.textContent = arquivoAlvo.name;
+            if (e.target.files && e.target.files[0]) {
+                elFileText.textContent = e.target.files[0].name;
                 const leitorBase64 = new FileReader();
                 leitorBase64.onload = function(evt) {
                     logoCarregada = false;
@@ -604,7 +577,7 @@
                     };
                     imgLogo.src = evt.target.result;
                 };
-                leitorBase64.readAsDataURL(arquivoAlvo);
+                leitorBase64.readAsDataURL(e.target.files[0]);
             }
         });
 
