@@ -454,25 +454,32 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
+            // REQUISITO EXATO: Esquerda 100% Intacta de Fábrica / Direita 20% Menor na Vertical
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
-                ctx.translate(logoX, logoY);
                 
                 let percentualZoom = elLogoZoom.value / 100;
                 logoAtualWidth = imgBase.naturalWidth * percentualZoom;
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
+                // Translação para a coordenada central de arraste definida pelo mouse/toque
+                ctx.translate(logoX, logoY);
+                
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
                 
+                // MUDANÇA: Move o ponto de ancoragem interno para a extrema esquerda da logo (-largura/2)
+                // Isso fixa o lado esquerdo em 100% de escala estável e projeta o afunilamento de 20% (0.200) unicamente no lado direito
+                ctx.translate(-logoAtualWidth / 2, 0);
                 if (elModelo.value === 'horizontal') {
                     ctx.transform(1, 0.200, 0, 1, 0, 0); 
                 } else {
                     ctx.transform(1, 0.080, 0, 1, 0, 0); 
                 }
                 
-                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
+                // Renderiza a partir da nova ancoragem travada na esquerda
+                ctx.drawImage(imgLogo, 0, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
@@ -560,7 +567,6 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
-        // AMARRAÇÃO CORRIGIDA: Leitor DataURL mapeando explicitamente o arquivo do índice zero [0] para destravar o upload
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 elFileText.textContent = e.target.files[0].name;
