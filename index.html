@@ -113,22 +113,6 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
-        .btn-kraft {
-            width: 33.33%;
-            height: 42px;
-            background-color: #c2a67a;
-            color: #ffffff;
-            border: none;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            align-self: flex-end;
-        }
-
-        .btn-kraft:hover { background-color: #b09468; }
-        .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
-
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -453,7 +437,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // MOTOR CORRIGIDO: TRAVA A ESQUERDA INTACTA E ENCOLHE 20% DEITANDO PARA A DIREITA
+            // MOTOR CORRIGIDO: AFUNILAMENTO LATERAL DIREITO (20%) + DESLOCAMENTO SUPERIOR PARA A DIREITA
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -462,24 +446,23 @@
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
-                // Translação para a coordenada de posicionamento
                 ctx.translate(logoX, logoY);
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // CORREÇÃO GEOMÉTRICA: Movemos a ancoragem fixa para a extrema ESQUERDA da logo
+                // Fixa o ponto zero na extrema esquerda para travar o hemisfério esquerdo intacto com 100% de altura
                 ctx.translate(-logoAtualWidth / 2, 0);
 
-                // Parâmetros da matriz ajustados: 
-                // Skew vertical positivo (0.150) e Skew horizontal negativo (-0.150) cooperam para inclinar para a direita.
-                // A escala vertical de 0.800 esmaga a extremidade oposta (direita) em exatamente 20%.
+                // CORREÇÃO DOS EIXOS: 
+                // Skew X negativo (-0.150) puxa o topo para a direita. 
+                // Escala Y em 0.800 encolhe a lateral direita em exatamente 20% criando o caimento em rampa linear.
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0.150, -0.150, 0.800, 0, 0); 
+                    ctx.transform(1, 0, -0.150, 0.800, 0, 0); 
                 } else {
-                    ctx.transform(1, 0.060, -0.060, 0.920, 0, 0); 
+                    ctx.transform(1, 0, -0.060, 0.920, 0, 0); 
                 }
                 
-                // Desenha a partir da quina esquerda (coordenada x=0) mantendo-a com 100% da altura original
+                // Desenha a partir da quina esquerda
                 ctx.drawImage(imgLogo, 0, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
@@ -569,8 +552,8 @@
         }
 
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                elFileText.textContent = e.target.files[0].name;
+            if (e.target.files && e.target.files) {
+                elFileText.textContent = e.target.files.name;
                 const leitorBase64 = new FileReader();
                 leitorBase64.onload = function(evt) {
                     logoCarregada = false;
@@ -584,7 +567,7 @@
                     };
                     imgLogo.src = evt.target.result;
                 };
-                leitorBase64.readAsDataURL(e.target.files[0]);
+                leitorBase64.readAsDataURL(e.target.files);
             }
         });
 
@@ -612,7 +595,7 @@
             }
         });
 
-        canvas.addEventListener('mousemove', function(e) {
+        canvas.addEventListener('pointermove', function(e) {
             if (!logoCarregada) return;
             const mouse = obterCoordenadasPointer(e);
             
