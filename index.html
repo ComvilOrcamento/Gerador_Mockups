@@ -129,7 +129,6 @@
 
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
-
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -314,6 +313,26 @@
 
                 <div class="form-group">
                     <label for="logo-zoom">Tamanho do Logotipo (Zoom)</label>
+                    <input type="range" id="logo-zoom" min="10" max="70" value="35">
+                </div>
+
+                <div class="form-group">
+                    <label for="logo-giro">Giro do Logotipo (Rotação)</label>
+                    <input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5">
+                </div>
+
+                <button type="button" id="btnGenerateJPEG" class="btn-action btn-generate">⚙️ Gerar Mockup (JPEG)</button>
+                <button type="submit" id="btnDownloadLayout" class="btn-action btn-download" disabled>💾 Descarregar Layout</button>
+            </form>
+        </div>
+
+        <div class="preview-container">
+            <div class="preview-box">
+                <canvas id="mockupCanvas"></canvas>
+            </div>
+            <span class="hint-text">💡 Arraste na tela para mover / Use as barras para zoom e giro</span>
+        </div>
+    </div>
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
@@ -369,6 +388,7 @@
         imgEmpresa.crossOrigin = "anonymous";
         imgEmpresa.onload = function() { logoEmpresaPronta = true; };
         imgEmpresa.src = 'logo-empresa.png';
+
         function renderizarGradeCordoes() {
             elCordaoGrid.innerHTML = "";
             mostruarioCordao.forEach(cor => {
@@ -444,22 +464,16 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
         function desenharLogoPerspectiva(ctx, img, x, y, largura, altura, escalaDireita) {
-            // Divide a logo em 100 fatias verticais para criar a transição suave de escala
             const fatias = 100;
             const largFatia = largura / fatias;
 
             for (let i = 0; i < fatias; i++) {
                 const progresso = i / fatias;
-                
-                // Calcula a redução gradual da altura conforme caminha para o lado direito
                 const fatorAltura = 1 - (progresso * (1 - escalaDireita));
                 const altFatia = altura * fatorAltura;
-                
-                // Distribui as seções baseando-se no ponto centralizado da logo
                 const secaoX = x - largura / 2 + (i * largFatia);
                 const secaoY = y - altFatia / 2;
 
-                // Captura um pedaço da imagem original e renderiza no tamanho distorcido
                 ctx.drawImage(
                     img,
                     (i * (img.naturalWidth / fatias)), 0, (img.naturalWidth / fatias), img.naturalHeight,
@@ -467,6 +481,7 @@
                 );
             }
         }
+
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
@@ -497,11 +512,10 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // --- APLICAÇÃO DE POWERCLIP E ENVELOPE DE PERSPECTIVA ---
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
-                // MÁSCARA (POWERCLIP): Limita o desenho estritamente dentro da frente da sacola
+                // MÁSCARA (POWERCLIP): Prende os pixels da logo dentro do vetor frontal da sacola
                 if (imgFrente.complete && imgFrente.naturalWidth > 0) {
                     ctx.drawImage(imgFrente, 0, 0);
                     ctx.globalCompositeOperation = 'source-in';
@@ -516,14 +530,13 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // Aplica a inclinação de Skew original
                 if (elModelo.value === 'horizontal') {
                     ctx.transform(1, 0, -0.200, 1, 0, 0); 
                 } else {
                     ctx.transform(1, 0, -0.080, 1, 0, 0); 
                 }
                 
-                // PERSPECTIVA (LATERAL DIREITA MENOR): Reduz a escala da direita dinamicamente
+                // DISTORÇÃO (ENVELOPE/PERSPECTIVA): Encolhe o lado direito
                 const escalaDireita = elModelo.value === 'horizontal' ? 0.82 : 0.90;
                 desenharLogoPerspectiva(ctx, imgLogo, 0, 0, logoAtualWidth, logoAtualHeight, escalaDireita);
                 
