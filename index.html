@@ -129,7 +129,6 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Grid de Cordão em 2 Linhas */
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -425,6 +424,7 @@
             return buffer;
         }
 
+        // MOTOR DE PROCESSAMENTO TOTALMENTE PLANO E SEM EFEITOS DE PERSPECTIVA NA LOGO DO CLIENTE
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
@@ -458,9 +458,11 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. LOGOTIPO CLIENTE
+            // 3. LOGOTIPO CLIENTE TOTALMENTE CORRIGIDO E LIMPO (EFEITOS REMOVIDOS)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
+                
+                // Posiciona baseado na coordenada atual do mouse/sliders
                 ctx.translate(logoX, logoY);
                 
                 let percentualZoom = elLogoZoom.value / 100;
@@ -468,16 +470,11 @@
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
+                // Executa apenas o giro manual do slider solicitado, sem nenhuma distorção automática ou skew
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
+                ctx.rotate(giroManualRad);
                 
-                if (elModelo.value === 'horizontal') {
-                    ctx.rotate((-1.8 * Math.PI / 180) + giroManualRad);
-                    ctx.transform(1, 0.070, 0, 1, 0, 0); 
-                } else {
-                    ctx.rotate((-0.8 * Math.PI / 180) + giroManualRad);
-                    ctx.transform(1, 0.030, 0, 1, 0, 0); 
-                }
-                
+                // Desenha a imagem plana em proporção pura de fábrica
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
@@ -497,7 +494,6 @@
             // 6. Rodapé Comvil Brindes
             if (incluirRodape) {
                 ctx.save();
-                
                 ctx.fillStyle = "#e8e8e8";
                 ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
 
@@ -519,10 +515,8 @@
 
                 ctx.fillStyle = "#2c3e50";
                 ctx.textAlign = "left";
-                
                 ctx.font = "bold 15px sans-serif";
                 ctx.fillText("COMVIL BRINDES", offsetTextoX, imgBase.naturalHeight + 42);
-                
                 ctx.font = "12px sans-serif";
                 ctx.fillStyle = "#555555";
                 ctx.fillText("CNPJ: 36.206.286/0001-03  |  ✉ comvil@comvil.com.br", offsetTextoX, imgBase.naturalHeight + 62);
@@ -572,16 +566,14 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
-        // AMARRAÇÃO CORRIGIDA: Usa FileReader com readAsDataURL para manter a string gravada de forma permanente
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                const arquivo = e.target.files[0];
+            if (e.target.files && e.target.files) {
+                const arquivo = e.target.files;
                 elFileText.textContent = arquivo.name;
 
                 const leitorBase64 = new FileReader();
                 leitorBase64.onload = function(evt) {
-                    const dadosStringBase64 = evt.target.result; // Converte em código string permanente
-
+                    const dadosStringBase64 = evt.target.result;
                     logoCarregada = false;
                     imgLogo = new Image();
                     imgLogo.onload = function() {
@@ -591,9 +583,9 @@
                         btnDownloadLayout.disabled = true;
                         processarETingirMockup(false); 
                     };
-                    imgLogo.src = dadosStringBase64; // Injeta de forma robusta
+                    imgLogo.src = dadosStringBase64;
                 };
-                leitorBase64.readAsDataURL(arquivo); // Método blindado contra descarte de memória
+                leitorBase64.readAsDataURL(arquivo);
             }
         });
 
