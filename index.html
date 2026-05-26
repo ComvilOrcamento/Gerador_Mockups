@@ -1,3 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mockup Premium - Comvil Brindes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #f3f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1150px;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .form-container {
+            background-color: #ffffff;
+            padding: 30px 25px;
+            border-radius: 12px;
+            width: 42%;
+            min-width: 350px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        h2 {
+            color: #003366;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #555555;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #333333;
+            font-size: 14px;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://w3.org' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 14px;
+        }
+        
+        .papel-triplo-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .picker-container {
+            display: flex;
+            flex-direction: column;
+            width: 33.33%;
+        }
+
+        .picker-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: #777777;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: 1px solid #cccccc;
+            width: 100%;
+            height: 42px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+        .btn-kraft {
+            width: 33.33%;
+            height: 42px;
+            background-color: #c2a67a;
+            color: #ffffff;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        .btn-kraft:hover { background-color: #b09468; }
+        .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
+
+        .cordao-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 6px;
+            background-color: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cordao-box {
+            aspect-ratio: 1 / 1;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid #cbd5e1;
+            transition: all 0.1s ease-in-out;
+        }
+
+        .cordao-box:hover { transform: scale(1.1); border-color: #64748b; }
+        .cordao-box.active { border-color: #003366; box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15); }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            outline: none;
+            accent-color: #003366;
+            cursor: pointer;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            padding: 6px;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .btn-file {
+            background-color: #efefef;
+            border: 1px solid #dddddd;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        .file-text {
+            font-size: 13px;
+            color: #666666;
+            margin-left: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-action {
+            width: 100%;
+            border: none;
+            padding: 13px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-generate { background-color: #28a745; color: #ffffff; }
+        .btn-generate:hover { background-color: #218838; }
+
+        .btn-download { background-color: #003366; color: #ffffff; }
+        .btn-download:hover { background-color: #002244; }
+        .btn-download:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        .preview-container {
+            flex-grow: 1;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 450px;
+        }
+
+        .preview-box {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #e8e8e8; 
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            touch-action: none;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+            object-fit: contain;
+            display: block;
+            border-radius: 8px;
+        }
+
+        .hint-text {
+            font-size: 11px;
+            color: #888888;
+            margin-top: 15px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        @media (max-width: 820px) {
+            .container { flex-direction: column; gap: 20px; }
+            .form-container { width: 100%; max-height: none; }
+            .preview-container { width: 100%; min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2>Mockup de Sacola</h2>
+            <form id="mockupForm">
+                <div class="form-group">
+                    <label for="modelo">Variação *</label>
+                    <select id="modelo">
+                        <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Configuração da Cor de Papel *</label>
+                    <div class="papel-triplo-wrapper">
+                        <div class="picker-container">
+                            <span class="picker-label">Frente</span>
+                            <input type="color" id="cor-frente" value="#ffffff">
+                        </div>
+                        <div class="picker-container">
+                            <span class="picker-label">Lateral</span>
+                            <input type="color" id="cor-lateral" value="#ffffff">
+                        </div>
+                        <button type="button" id="btnKraft" class="btn-kraft">Kraft</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Cordão *</label>
+                    <div class="cordao-grid" id="cordaoGrid"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Logotipo do Cliente (PNG Transparente) *</label>
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn-file">Escolher ficheiro</button>
+                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                        <input type="file" id="logo" accept="image/png">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="logo-zoom">Tamanho do Logotipo (Zoom)</label>
     <script>
         const canvas = document.getElementById('mockupCanvas');
         const ctx = canvas.getContext('2d');
