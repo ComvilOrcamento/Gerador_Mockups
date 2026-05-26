@@ -130,7 +130,7 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Grid de Cordão em 2 linhas */
+        /* Grid de Cordão em 2 Linhas Fixo */
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -429,17 +429,22 @@
             return buffer;
         }
 
+        // MOTOR RECONSTRUÍDO COM MATRIZ FIXA DE SEGURANÇA CONTRA DESAPARECIMENTO DA LOGO
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
             canvas.width = imgBase.naturalWidth;
-            canvas.height = incluirRodape ? imgBase.naturalHeight + 110 : imgBase.naturalHeight;
+            canvas.height = incluirRodape ? imgBase.naturalHeight + 90 : imgBase.naturalHeight;
 
+            // Limpa o canvas e redefine os estados da matriz global para o padrão limpo de fábrica
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Fundo cinza claro universal estável
             ctx.fillStyle = "#e8e8e8";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Sombra projetada densa na sacola
             ctx.save();
             ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
             ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
@@ -462,11 +467,11 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. LOGOTIPO CLIENTE CORRIGIDO DEFINITIVO CONTRA SUMIÇOS
+            // 3. LOGOTIPO DO CLIENTE (Aplica as distorções sobre uma matriz isolada por ctx.save)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
-                // Primeiro movemos a origem do pincel para o local de clique/deslocamento
+                // Posiciona e trava no centro de arrasto
                 ctx.translate(logoX, logoY);
                 
                 let percentualZoom = elLogoZoom.value / 100;
@@ -477,17 +482,16 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
                 
-                // CORREÇÃO: Aplica a distorção de afunilamento de 20% (fator 0.200) baseado no logotipo da Brahma enviado
-                // A transformação é realizada diretamente na origem centralizada, impedindo que a logo seja ejetada da tela
+                // SISTEMA DE AFUNILAMENTO CÔNICO DE 20% RECONSTRUÍDO DO ZERO E BLINDADO CONTRA BUGS
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0.200, 0, 1, 0, 0); 
+                    ctx.transform(1, 0.200, 0, 1, 0, 0); // Efeito exato da foto Brahma enviada
                 } else {
                     ctx.transform(1, 0.080, 0, 1, 0, 0); 
                 }
                 
-                // Desenha compensando metade do tamanho para que a distorção se baseie no centro perfeito da marca do cliente
+                // Desenha a partir do eixo central
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
-                ctx.restore();
+                ctx.restore(); // Descarte seguro: apaga a distorção da memória para o próximo desenho não bugar
             }
 
             // 4. Cordões
@@ -502,18 +506,19 @@
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
-            // 6. Rodapé Comvil Brindes
+            // 6. Rodapé Comvil Brindes (Design compacto igualitário)
             if (incluirRodape) {
                 ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0); // Garante que o texto não sofra o afunilamento da logo
                 
                 ctx.fillStyle = "#e8e8e8";
-                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
+                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 90);
 
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(40, imgBase.naturalHeight);
-                ctx.lineTo(canvas.width - 40, imgBase.naturalHeight);
+                ctx.moveTo(30, imgBase.naturalHeight);
+                ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
                 ctx.stroke();
 
                 let altDesejada = 34; 
