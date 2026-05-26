@@ -246,7 +246,7 @@
             position: relative;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02);
             border: 1px solid rgba(226, 232, 240, 0.8);
-            touch-action: none; /* Estabiliza o toque no celular impedindo o scroll da página */
+            touch-action: none;
         }
 
         canvas {
@@ -462,9 +462,11 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. LOGOTIPO CLIENTE (Com distorção cônica exata de 20% na direita com base no exemplo enviado)
+            // 3. LOGOTIPO CLIENTE CORRIGIDO DEFINITIVO CONTRA SUMIÇOS
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
+                
+                // Primeiro movemos a origem do pincel para o local de clique/deslocamento
                 ctx.translate(logoX, logoY);
                 
                 let percentualZoom = elLogoZoom.value / 100;
@@ -473,17 +475,17 @@
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
+                ctx.rotate(giroManualRad);
                 
-                // REQUISITO DA IMAGEM: Modificado os parâmetros do transform para aplicar exatamente 20% (fator 0.200)
-                // de afunilamento/inclinação vertical síncrona no quadrante direito, deitando a arte perfeitamente sobre a foto
+                // CORREÇÃO: Aplica a distorção de afunilamento de 20% (fator 0.200) baseado no logotipo da Brahma enviado
+                // A transformação é realizada diretamente na origem centralizada, impedindo que a logo seja ejetada da tela
                 if (elModelo.value === 'horizontal') {
-                    ctx.rotate((-1.8 * Math.PI / 180) + giroManualRad);
-                    ctx.transform(1, 0.200, 0, 1, 0, 0); // Efeito cônico de 20% na sacola deitada
+                    ctx.transform(1, 0.200, 0, 1, 0, 0); 
                 } else {
-                    ctx.rotate((-0.8 * Math.PI / 180) + giroManualRad);
-                    ctx.transform(1, 0.080, 0, 1, 0, 0); // Efeito ajustado proporcional na vertical
+                    ctx.transform(1, 0.080, 0, 1, 0, 0); 
                 }
                 
+                // Desenha compensando metade do tamanho para que a distorção se baseie no centro perfeito da marca do cliente
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
@@ -503,14 +505,15 @@
             // 6. Rodapé Comvil Brindes
             if (incluirRodape) {
                 ctx.save();
+                
                 ctx.fillStyle = "#e8e8e8";
                 ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
 
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(30, imgBase.naturalHeight);
-                ctx.lineTo(canvas.width - 30, imgBase.naturalHeight);
+                ctx.moveTo(40, imgBase.naturalHeight);
+                ctx.lineTo(canvas.width - 40, imgBase.naturalHeight);
                 ctx.stroke();
 
                 let altDesejada = 34; 
@@ -598,7 +601,6 @@
             }
         });
 
-        // MECANISMO UNIFICADO POINTER-EVENTS (IGUAL PARA PC E CELULAR SEM DIFERENÇAS)
         function obterCoordenadasPointer(e) {
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -675,7 +677,8 @@
             e.preventDefault();
             if (!mockupGeradoComRodape) return;
             const link = document.createElement('a');
-            link.download = `proposta-comvil-${elModelo.value}.jpg`;
+            const sentido = elModelo.value;
+            link.download = `proposta-comvil-${sentido}.jpg`;
             link.href = canvas.toDataURL("image/jpeg", 1.0);
             link.click();
         });
