@@ -430,7 +430,6 @@
             canvas.height = incluirRodape ? imgBase.naturalHeight + 110 : imgBase.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             ctx.fillStyle = "#e8e8e8";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -454,7 +453,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // REQUISITO EXATO: Esquerda 100% Intacta de Fábrica / Direita 20% Menor na Vertical
+            // NOVO MOTOR DE PERSPECTIVA CÔNICA: CORRIGE O AFUNILAMENTO DA FOTO 1
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -463,23 +462,30 @@
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
-                // Translação para a coordenada central de arraste definida pelo mouse/toque
                 ctx.translate(logoX, logoY);
-                
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
-                
-                // MUDANÇA: Move o ponto de ancoragem interno para a extrema esquerda da logo (-largura/2)
-                // Isso fixa o lado esquerdo em 100% de escala estável e projeta o afunilamento de 20% (0.200) unicamente no lado direito
-                ctx.translate(-logoAtualWidth / 2, 0);
-                if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0.200, 0, 1, 0, 0); 
-                } else {
-                    ctx.transform(1, 0.080, 0, 1, 0, 0); 
+
+                // Define a intensidade de redução cônica (20% na horizontal, proporcional na vertical)
+                let fatorFuga = elModelo.value === 'horizontal' ? 0.20 : 0.08;
+
+                // Fatiamento vertical inteligente: redesenha a logo em fatias finas de 1 pixel
+                // Modifica a escala vertical gradativamente para criar a convergência correta das linhas
+                for (let i = 0; i < logoAtualWidth; i++) {
+                    let progressoHorizontal = (i - logoAtualWidth / 2) / logoAtualWidth; 
+                    
+                    // Calcula o encolhimento simétrico: o lado direito esmaga na vertical em até 20%
+                    let escalaVerticalFatia = 1 - (progressoHorizontal * fatorFuga);
+                    
+                    let fatiaSourceX = (i / logoAtualWidth) * imgLogo.naturalWidth;
+                    let largFatiaSource = imgLogo.naturalWidth / logoAtualWidth;
+
+                    ctx.drawImage(
+                        imgLogo,
+                        fatiaSourceX, 0, largFatiaSource, imgLogo.naturalHeight, // Área de origem (Original)
+                        (i - logoAtualWidth / 2), (-logoAtualHeight * escalaVerticalFatia) / 2, 1, logoAtualHeight * escalaVerticalFatia // Destino comprimido
+                    );
                 }
-                
-                // Renderiza a partir da nova ancoragem travada na esquerda
-                ctx.drawImage(imgLogo, 0, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
