@@ -453,7 +453,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // MOTOR RECALIBRADO: LADO DIREITO EXATAMENTE 20% MENOR NA VERTICAL (EIXO ESQUERDO INTEGRAL)
+            // MOTOR CORRIGIDO: TRAVA A ESQUERDA INTACTA E ENCOLHE 20% DEITANDO PARA A DIREITA
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -462,20 +462,25 @@
                 let proporcao = (imgLogo.naturalHeight / imgLogo.naturalWidth);
                 logoAtualHeight = proporcao * logoAtualWidth;
                 
+                // Translação para a coordenada de posicionamento
                 ctx.translate(logoX, logoY);
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // ATUALIZAÇÃO DA MATRIZ: 
-                // O terceiro parâmetro (-0.200) cuida da inclinação para a direita.
-                // O quarto parâmetro (0.800) executa a compressão vertical exata de 20% solicitada apenas para a metade direita em fuga.
+                // CORREÇÃO GEOMÉTRICA: Movemos a ancoragem fixa para a extrema ESQUERDA da logo
+                ctx.translate(-logoAtualWidth / 2, 0);
+
+                // Parâmetros da matriz ajustados: 
+                // Skew vertical positivo (0.150) e Skew horizontal negativo (-0.150) cooperam para inclinar para a direita.
+                // A escala vertical de 0.800 esmaga a extremidade oposta (direita) em exatamente 20%.
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0.200, -0.200, 0.800, 0, 0); 
+                    ctx.transform(1, 0.150, -0.150, 0.800, 0, 0); 
                 } else {
-                    ctx.transform(1, 0.080, -0.080, 0.920, 0, 0); 
+                    ctx.transform(1, 0.060, -0.060, 0.920, 0, 0); 
                 }
                 
-                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
+                // Desenha a partir da quina esquerda (coordenada x=0) mantendo-a com 100% da altura original
+                ctx.drawImage(imgLogo, 0, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
@@ -564,8 +569,8 @@
         }
 
         elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files) {
-                elFileText.textContent = e.target.files.name;
+            if (e.target.files && e.target.files[0]) {
+                elFileText.textContent = e.target.files[0].name;
                 const leitorBase64 = new FileReader();
                 leitorBase64.onload = function(evt) {
                     logoCarregada = false;
@@ -607,7 +612,7 @@
             }
         });
 
-        canvas.addEventListener('pointermove', function(e) {
+        canvas.addEventListener('mousemove', function(e) {
             if (!logoCarregada) return;
             const mouse = obterCoordenadasPointer(e);
             
