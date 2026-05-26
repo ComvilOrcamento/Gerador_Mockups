@@ -453,7 +453,6 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // RESTAURAÇÃO COMPLETA DO MOTOR ORIGINAL QUE ESTAVA FUNCIONANDO ANTERIORMENTE
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -466,11 +465,12 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // Aplica de volta os parâmetros originais estáveis de transform que você validou
+                // CORREÇÃO VISUAL: Sinal invertido de positivo para NEGATIVO (-0.200) no Skew X.
+                // Isso muda a direção da inclinação superior, deitando a arte perfeitamente para a DIREITA.
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0.200, 0, 1, 0, 0); 
+                    ctx.transform(1, 0, -0.200, 1, 0, 0); 
                 } else {
-                    ctx.transform(1, 0.080, 0, 1, 0, 0); 
+                    ctx.transform(1, 0, -0.080, 1, 0, 0); 
                 }
                 
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
@@ -561,7 +561,6 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
-        // CORREÇÃO DEFINITIVA DO ARQUIVO: readAsDataURL agora mapeia explicitamente o arquivo [0] da fila
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 elFileText.textContent = e.target.files[0].name;
