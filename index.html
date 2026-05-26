@@ -130,7 +130,6 @@
         .btn-kraft:hover { background-color: #b09468; }
         .btn-kraft.active { border: 2px solid #003366; background-color: #9e8257; }
 
-        /* Grid de Cordão em 2 Linhas Fixo */
         .cordao-grid {
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -199,6 +198,41 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        /* Container do Mostruário de Porcentagem */
+        .progress-container {
+            display: none;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            margin-top: 10px;
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            background-color: #e2e8f0;
+            height: 100%;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #28a745;
+            transition: width 0.05s linear;
+        }
+
+        .progress-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
         }
 
         .btn-action {
@@ -314,6 +348,17 @@
                         <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
                         <input type="file" id="logo" accept="image/png">
                     </div>
+                    
+                    <!-- Painel de Porcentagem de Conclusão -->
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-status">
+                            <span id="progressLabel">Processando efeito 3D...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -330,7 +375,6 @@
                 <button type="submit" id="btnDownloadLayout" class="btn-action btn-download" disabled>💾 Descarregar Layout</button>
             </form>
         </div>
-
         <div class="preview-container">
             <div class="preview-box">
                 <canvas id="mockupCanvas"></canvas>
@@ -338,6 +382,7 @@
             <span class="hint-text">💡 Arraste na tela para mover / Use as barras laterais para zoom e giro</span>
         </div>
     </div>
+
     <!-- LOGICA JAVASCRIPT -->
     <script>
         const canvas = document.getElementById('mockupCanvas');
@@ -351,6 +396,12 @@
         const elFileText = document.getElementById('file-text');
         const elCordaoGrid = document.getElementById('cordaoGrid');
         
+        // Elementos do mostruário de progresso
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressLabel = document.getElementById('progressLabel');
+
         const elLogoZoom = document.getElementById('logo-zoom');
         const elLogoGiro = document.getElementById('logo-giro');
         const elForm = document.getElementById('mockupForm');
@@ -428,23 +479,17 @@
             }
             return buffer;
         }
-
-        // MOTOR RECONSTRUÍDO COM MATRIZ FIXA DE SEGURANÇA CONTRA DESAPARECIMENTO DA LOGO
         function processarETingirMockup(incluirRodape = false) {
             if (!imgBase.complete || imgBase.naturalWidth === 0) return;
 
             canvas.width = imgBase.naturalWidth;
-            canvas.height = incluirRodape ? imgBase.naturalHeight + 90 : imgBase.naturalHeight;
+            canvas.height = incluirRodape ? imgBase.naturalHeight + 110 : imgBase.naturalHeight;
 
-            // Limpa o canvas e redefine os estados da matriz global para o padrão limpo de fábrica
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Fundo cinza claro universal estável
             ctx.fillStyle = "#e8e8e8";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Sombra projetada densa na sacola
             ctx.save();
             ctx.shadowColor = "rgba(0, 0, 0, 0.38)"; 
             ctx.shadowBlur = imgBase.naturalWidth * 0.04;    
@@ -467,11 +512,11 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // 3. LOGOTIPO DO CLIENTE (Aplica as distorções sobre uma matriz isolada por ctx.save)
+            // 3. LOGOTIPO DO CLIENTE COM AFUNILAMENTO DE 20% FIEL À FOTO ENVIADA
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
-                // Posiciona e trava no centro de arrasto
+                // Mapeia a origem do desenho para as coordenadas centrais atuais capturadas
                 ctx.translate(logoX, logoY);
                 
                 let percentualZoom = elLogoZoom.value / 100;
@@ -482,16 +527,16 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
                 
-                // SISTEMA DE AFUNILAMENTO CÔNICO DE 20% RECONSTRUÍDO DO ZERO E BLINDADO CONTRA BUGS
+                // REQUISITO: Injeta exatamente 20% de afunilamento/inclinação cônica 3D (fator 0.200) na lateral direita
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0.200, 0, 1, 0, 0); // Efeito exato da foto Brahma enviada
+                    ctx.transform(1, 0.200, 0, 1, 0, 0); 
                 } else {
                     ctx.transform(1, 0.080, 0, 1, 0, 0); 
                 }
                 
-                // Desenha a partir do eixo central
+                // Desenha compensando o centro geométrico para evitar sumiços
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
-                ctx.restore(); // Descarte seguro: apaga a distorção da memória para o próximo desenho não bugar
+                ctx.restore();
             }
 
             // 4. Cordões
@@ -506,13 +551,11 @@
             ctx.drawImage(imgBase, 0, 0);
             ctx.restore();
 
-            // 6. Rodapé Comvil Brindes (Design compacto igualitário)
+            // 6. Rodapé Comvil Brindes
             if (incluirRodape) {
                 ctx.save();
-                ctx.setTransform(1, 0, 0, 1, 0, 0); // Garante que o texto não sofra o afunilamento da logo
-                
                 ctx.fillStyle = "#e8e8e8";
-                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 90);
+                ctx.fillRect(0, imgBase.naturalHeight, canvas.width, 110);
 
                 ctx.strokeStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.lineWidth = 1;
@@ -543,69 +586,7 @@
                 ctx.restore();
             }
         }
-        function resetarPosicaoLogoPadrao() {
-            if (!imgBase.naturalWidth) return;
-            if (elModelo.value === 'horizontal') {
-                logoX = imgBase.naturalWidth * 0.48;
-                logoY = imgBase.naturalHeight * 0.54;
-            } else {
-                logoX = imgBase.naturalWidth * 0.50;
-                logoY = imgBase.naturalHeight * 0.53;
-            }
-        }
-
-        function carregarArquivosDoServidor() {
-            const sentido = elModelo.value;
-            let carregadas = 0;
-
-            function verificarPronto() {
-                carregadas++;
-                if (carregadas === 4) {
-                    resetarPosicaoLogoPadrao();
-                    mockupGeradoComRodape = false;
-                    btnDownloadLayout.disabled = true;
-                    processarETingirMockup(false);
-                }
-            }
-
-            imgBase.crossOrigin = "anonymous";
-            imgFrente.crossOrigin = "anonymous";
-            imgLateral.crossOrigin = "anonymous";
-            imgCordao.crossOrigin = "anonymous";
-
-            imgBase.onload = verificarPronto;
-            imgFrente.onload = verificarPronto;
-            imgLateral.onload = verificarPronto;
-            imgCordao.onload = verificarPronto;
-
-            imgBase.src = `sacola_${sentido}_base.png?v=${Date.now()}`;
-            imgFrente.src = `sacola_${sentido}_frente.png?v=${Date.now()}`;
-            imgLateral.src = `sacola_${sentido}_lateral.png?v=${Date.now()}`;
-            imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
-        }
-
-        elInputLogo.addEventListener('change', function(e) {
-            if (e.target.files && e.target.files) {
-                elFileText.textContent = e.target.files.name;
-                const arquivo = e.target.files;
-
-                const leitorBase64 = new FileReader();
-                leitorBase64.onload = function(evt) {
-                    logoCarregada = false;
-                    imgLogo = new Image();
-                    imgLogo.onload = function() {
-                        logoCarregada = true;
-                        resetarPosicaoLogoPadrao();
-                        mockupGeradoComRodape = false;
-                        btnDownloadLayout.disabled = true;
-                        processarETingirMockup(false); 
-                    };
-                    imgLogo.src = evt.target.result;
-                };
-                leitorBase64.readAsDataURL(arquivo);
-            }
-        });
-
+        // MECANISMO DE COORDENADAS HÍBRIDAS ADAPTATIVO (MOLDA-SE AO TOQUE E AO MOUSE DE FORMA IDÊNTICA)
         function obterCoordenadasPointer(e) {
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -614,10 +595,11 @@
         }
 
         canvas.addEventListener('pointerdown', function(e) {
-            if (!logoCarregada) return;
-            canvas.setPointerCapture(e.pointerId); 
+            if (!logoProntaComEfeito) return;
+            canvas.setPointerCapture(e.pointerId); // Trava o toque do celular impedindo o scroll do navegador
             
             const mouse = obterCoordenadasPointer(e);
+            // Verifica de forma geométrica se o clique/toque do usuário foi dentro do quadrado da logo
             if (mouse.x >= logoX - logoAtualWidth/2 && mouse.x <= logoX + logoAtualWidth/2 &&
                 mouse.y >= logoY - logoAtualHeight/2 && mouse.y <= logoY + logoAtualHeight/2) {
                 
@@ -631,13 +613,13 @@
         });
 
         canvas.addEventListener('pointermove', function(e) {
-            if (!logoCarregada) return;
+            if (!logoProntaComEfeito) return;
             const mouse = obterCoordenadasPointer(e);
             
             if (arrastandoLogo) {
                 logoX = mouse.x - offsetMouseX;
                 logoY = mouse.y - offsetMouseY;
-                processarETingirMockup(false); 
+                processarETingirMockup(false); // Atualiza instantaneamente na tela enquanto move
             } else {
                 if (mouse.x >= logoX - logoAtualWidth/2 && mouse.x <= logoX + logoAtualWidth/2 &&
                     mouse.y >= logoY - logoAtualHeight/2 && mouse.y <= logoY + logoAtualHeight/2) {
@@ -656,12 +638,14 @@
             }
         });
 
+        // GATILHO DO BOTÃO GERAR: Une o mockup e as informações da Comvil Brindes na tela
         btnGenerateJPEG.addEventListener('click', function() {
             processarETingirMockup(true); 
             mockupGeradoComRodape = true;
-            btnDownloadLayout.disabled = false; 
+            btnDownloadLayout.disabled = false; // Libera o botão de baixar layout em JPEG
         });
 
+        // Controles auxiliares dos seletores e botões do painel lateral
         elBtnKraft.addEventListener('click', function() {
             modoKraftAtivo = !modoKraftAtivo;
             if (modoKraftAtivo) this.classList.add('active');
@@ -671,13 +655,37 @@
             processarETingirMockup(false);
         });
 
-        elCorFrente.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
-        elCorLateral.addEventListener('input', () => { modoKraftAtivo = false; elBtnKraft.classList.remove('active'); mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
+        elCorFrente.addEventListener('input', () => { 
+            modoKraftAtivo = false; 
+            elBtnKraft.classList.remove('active'); 
+            mockupGeradoComRodape = false; 
+            btnDownloadLayout.disabled = true; 
+            processarETingirMockup(false); 
+        });
         
-        elLogoZoom.addEventListener('input', () => { mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
-        elLogoGiro.addEventListener('input', () => { mockupGeradoComRodape = false; btnDownloadLayout.disabled = true; processarETingirMockup(false); });
+        elCorLateral.addEventListener('input', () => { 
+            modoKraftAtivo = false; 
+            elBtnKraft.classList.remove('active'); 
+            mockupGeradoComRodape = false; 
+            btnDownloadLayout.disabled = true; 
+            processarETingirMockup(false); 
+        });
+        
+        elLogoZoom.addEventListener('input', () => { 
+            mockupGeradoComRodape = false; 
+            btnDownloadLayout.disabled = true; 
+            processarETingirMockup(false); 
+        });
+        
+        elLogoGiro.addEventListener('input', () => { 
+            mockupGeradoComRodape = false; 
+            btnDownloadLayout.disabled = true; 
+            processarETingirMockup(false); 
+        });
+        
         elModelo.addEventListener('change', carregarArquivosDoServidor);
 
+        // SUBMISSÃO FINAL: Descarrega nativamente a lâmina comercial unificada em formato .jpg puro
         elForm.addEventListener('submit', function(e) {
             e.preventDefault();
             if (!mockupGeradoComRodape) return;
@@ -688,6 +696,7 @@
             link.click();
         });
 
+        // Inicialização automática do sistema ao carregar a página
         window.addEventListener('DOMContentLoaded', () => {
             renderizarGradeCordoes();
             carregarArquivosDoServidor();
