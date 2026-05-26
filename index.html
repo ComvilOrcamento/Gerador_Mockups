@@ -453,7 +453,7 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // MOTOR DE PROJEÇÃO LINEAR ATÔMICO: CORRIGE INCLINAÇÃO DIREITA E AFUNILAMENTO VERTICAL SIMULTÂNEOS
+            // CORREÇÃO: EIXO SUPERIOR PUXANDO RIGOROSAMENTE PARA A DIREITA (SINAL NEGATIVO)
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -466,32 +466,18 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // Configuração das taxas: deita o eixo superior para a direita e comprime a lateral direita em 20%
-                let inclinacaoSuperiorX = 0.150; 
-                let encolhimentoLateralDireito = elModelo.value === 'horizontal' ? 0.200 : 0.080;
+                // Força o ponto fixo de ancoragem inicial na quina esquerda (-largura/2)
+                ctx.translate(-logoAtualWidth / 2, 0);
 
-                // Fatiamento vertical estável em 1 pixel (Não trava o hardware e aceita qualquer proporção de arquivo)
-                for (let i = 0; i < logoAtualWidth; i++) {
-                    let progressoX = i / logoAtualWidth; // Vai de 0 (esquerda) a 1 (direita)
-                    
-                    // Altera a escala vertical progressivamente em rampa para esmagar apenas o quadrante direito
-                    let escalaVerticalFatia = 1 - (progressoX * encolhimentoLateralDireito);
-                    
-                    // Desloca o topo linearmente para a direita baseando-se no progresso horizontal da fatia
-                    let deslocamentoEixoSuperiorY = (progressoX - 0.5) * logoAtualWidth * inclinacaoSuperiorX;
-
-                    let fatiaSourceX = (i / logoAtualWidth) * imgLogo.naturalWidth;
-                    let largFatiaSource = imgLogo.naturalWidth / logoAtualWidth;
-
-                    ctx.drawImage(
-                        imgLogo,
-                        fatiaSourceX, 0, largFatiaSource, imgLogo.naturalHeight, // Origem íntegra
-                        (i - logoAtualWidth / 2), // Posição horizontal centrada
-                        (-logoAtualHeight * escalaVerticalFatia) / 2 + deslocamentoEixoSuperiorY, // Posição vertical combinada dos eixos
-                        1, 
-                        logoAtualHeight * escalaVerticalFatia // Escala vertical projetada
-                    );
+                // O terceiro parâmetro (-0.150) define o cisalhamento horizontal (puxa o topo para a direita).
+                // O quarto parâmetro (0.800) executa de forma limpa o encolhimento vertical de 20% na lateral direita.
+                if (elModelo.value === 'horizontal') {
+                    ctx.transform(1, 0, -0.150, 0.800, 0, 0); 
+                } else {
+                    ctx.transform(1, 0, -0.060, 0.920, 0, 0); 
                 }
+                
+                ctx.drawImage(imgLogo, 0, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
@@ -579,7 +565,6 @@
             imgCordao.src = `sacola_${sentido}_cordao.png?v=${Date.now()}`;
         }
 
-        // CORREÇÃO VISUAL DEFINITIVA: Inclusão do índice [0] para ler corretamente o arquivo selecionado
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 elFileText.textContent = e.target.files[0].name;
