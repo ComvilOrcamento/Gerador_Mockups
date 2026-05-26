@@ -49,7 +49,13 @@
         <div class="form-container">
             <h2>Mockup de Sacola</h2>
             <form id="mockupForm">
-                <div class="form-group"><label for="modelo">Variação *</label><select id="modelo"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></div>
+                <div class="form-group">
+                    <label for="modelo">Variação *</label>
+                    <select id="modelo">
+                        <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Configuração da Cor de Papel *</label>
                     <div class="papel-triplo-wrapper">
@@ -61,15 +67,22 @@
                 <div class="form-group"><label>Cordão *</label><div class="cordao-grid" id="cordaoGrid"></div></div>
                 <div class="form-group">
                     <label>Logotipo do Cliente (PNG Transparente) *</label>
-                    <div class="file-input-wrapper"><button type="button" class="btn-file">Escolher ficheiro</button><span id="file-text" class="file-text">Nenhum ficheiro selecionado</span><input type="file" id="logo" accept="image/png"></div>
+                    <div class="file-input-wrapper">
+                        <button type="button" class="btn-file">Escolher ficheiro</button>
+                        <span id="file-text" class="file-text">Nenhum ficheiro selecionado</span>
+                        <input type="file" id="logo" accept="image/png">
+                    </div>
                 </div>
                 <div class="form-group"><label for="logo-zoom">Tamanho do Logotipo (Zoom)</label><input type="range" id="logo-zoom" min="10" max="70" value="35"></div>
-                <div class="form-group"><label for="logo-giro">Giro do Logotipo (Rotação)</label><input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5"></div>
+                <div class="form-group"><label TWOfor="logo-giro">Giro do Logotipo (Rotação)</label><input type="range" id="logo-giro" min="-15" max="15" value="0" step="0.5"></div>
                 <button type="button" id="btnGenerateJPEG" class="btn-action btn-generate">⚙️ Gerar Mockup (JPEG)</button>
                 <button type="submit" id="btnDownloadLayout" class="btn-action btn-download" disabled>💾 Descarregar Layout</button>
             </form>
         </div>
-        <div class="preview-container"><div class="preview-box"><canvas id="mockupCanvas"></canvas></div><span class="hint-text">💡 Arraste na tela para mover / Use as barras para zoom e giro</span></div>
+        <div class="preview-container">
+            <div class="preview-box"><canvas id="mockupCanvas"></canvas></div>
+            <span class="hint-text">💡 Arraste na tela para mover / Use as barras para zoom e giro</span>
+        </div>
     </div>
     <script>
         const canvas = document.getElementById('mockupCanvas');
@@ -221,17 +234,18 @@
             }
         }
 
+        // --- SOLUÇÃO ANTI-ERRO: USO DE ITEM(0) GARANTE CAPTURA DO ARQUIVO ---
         elInputLogo.addEventListener('change', (e) => {
-            const files = e.target.files;
-            if (files && files[0]) {
-                elFileText.textContent = files[0].name;
+            if (e.target.files && e.target.files.length > 0) {
+                const arquivoMarcado = e.target.files.item(0);
+                elFileText.textContent = arquivoMarcado.name;
                 const reader = new FileReader();
                 reader.onload = (evt) => {
                     logoCarregada = false; imgLogo = new Image();
                     imgLogo.onload = () => { logoCarregada = true; resetarPosicaoLogoPadrao(); atualizarPreview(); };
                     imgLogo.src = evt.target.result;
                 };
-                reader.readAsDataURL(files[0]);
+                reader.readAsDataURL(arquivoMarcado);
             }
         });
 
