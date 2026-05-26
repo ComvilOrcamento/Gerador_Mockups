@@ -588,7 +588,7 @@
                 ctx.restore();
             }
         }
-        // --- FILEREADER CORRIGIDO PARA EVITAR ERROS NO CARREGAMENTO DA IMAGEM ---
+           // --- FILEREADER CORRIGIDO: Agora acessa a propriedade [0] corretamente ---
         elInputLogo.addEventListener('change', function(e) {
             if (e.target.files && e.target.files[0]) {
                 elFileText.textContent = e.target.files[0].name;
