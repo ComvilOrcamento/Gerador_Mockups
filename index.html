@@ -453,7 +453,6 @@
                 ctx.drawImage(camadaLateral, 0, 0);
             }
 
-            // NOVO MOTOR DE PERSPECTIVA CÔNICA: CORRIGE O AFUNILAMENTO DA FOTO 1
             if (logoCarregada && imgLogo.complete && imgLogo.naturalWidth > 0) {
                 ctx.save();
                 
@@ -466,26 +465,15 @@
                 let giroManualRad = (parseFloat(elLogoGiro.value) * Math.PI) / 180;
                 ctx.rotate(giroManualRad);
 
-                // Define a intensidade de redução cônica (20% na horizontal, proporcional na vertical)
-                let fatorFuga = elModelo.value === 'horizontal' ? 0.20 : 0.08;
-
-                // Fatiamento vertical inteligente: redesenha a logo em fatias finas de 1 pixel
-                // Modifica a escala vertical gradativamente para criar a convergência correta das linhas
-                for (let i = 0; i < logoAtualWidth; i++) {
-                    let progressoHorizontal = (i - logoAtualWidth / 2) / logoAtualWidth; 
-                    
-                    // Calcula o encolhimento simétrico: o lado direito esmaga na vertical em até 20%
-                    let escalaVerticalFatia = 1 - (progressoHorizontal * fatorFuga);
-                    
-                    let fatiaSourceX = (i / logoAtualWidth) * imgLogo.naturalWidth;
-                    let largFatiaSource = imgLogo.naturalWidth / logoAtualWidth;
-
-                    ctx.drawImage(
-                        imgLogo,
-                        fatiaSourceX, 0, largFatiaSource, imgLogo.naturalHeight, // Área de origem (Original)
-                        (i - logoAtualWidth / 2), (-logoAtualHeight * escalaVerticalFatia) / 2, 1, logoAtualHeight * escalaVerticalFatia // Destino comprimido
-                    );
+                // CORREÇÃO VISUAL: Sinal invertido de positivo para NEGATIVO (-0.200) no Skew X.
+                // Isso muda a direção da inclinação superior, deitando a arte perfeitamente para a DIREITA.
+                if (elModelo.value === 'horizontal') {
+                    ctx.transform(1, 0, -0.200, 1, 0, 0); 
+                } else {
+                    ctx.transform(1, 0, -0.080, 1, 0, 0); 
                 }
+                
+                ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
                 ctx.restore();
             }
 
