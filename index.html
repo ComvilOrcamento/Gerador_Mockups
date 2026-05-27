@@ -468,9 +468,9 @@
                 // CORREÇÃO VISUAL: Sinal invertido de positivo para NEGATIVO (-0.200) no Skew X.
                 // Isso muda a direção da inclinação superior, deitando a arte perfeitamente para a DIREITA.
                 if (elModelo.value === 'horizontal') {
-                    ctx.transform(1, 0, -0.250, 0, 0, 0); 
+                    ctx.transform(1, 0, 0 , 800 , 0, 0); 
                 } else {
-                    ctx.transform(1, 0, 0 , 1, 0, 0); 
+                    ctx.transform(1, 0, 0 , 25 , 0, 0); 
                 }
                 
                 ctx.drawImage(imgLogo, -logoAtualWidth / 2, -logoAtualHeight / 2, logoAtualWidth, logoAtualHeight);
